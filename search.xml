@@ -1,6 +1,290 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Redis相关</title>
+    <url>/2020/07/19/Redis%E7%9B%B8%E5%85%B3.html</url>
+    <content><![CDATA[<ol>
+<li><h5 id="redis和memcached什么区别？为什么高并发下有时单线程的redis比多线程的memcached效率要高？"><a href="#redis和memcached什么区别？为什么高并发下有时单线程的redis比多线程的memcached效率要高？" class="headerlink" title="redis和memcached什么区别？为什么高并发下有时单线程的redis比多线程的memcached效率要高？"></a>redis和memcached什么区别？为什么高并发下有时单线程的redis比多线程的memcached效率要高？</h5><p>区别：</p>
+<ol>
+<li>mc可缓存图片和视频。rd支持除k/v更多的数据结构；</li>
+<li>rd可以使用虚拟内存，rd可持久化和aof灾难恢复，rd通过主从支持数据备份；</li>
+<li>rd可以做消息队列</li>
+</ol>
+<p>原因：mc多线程模型引入了缓存一致性和锁，加锁带来了性能损耗。</p>
+</li>
+<li><h5 id="redis主从复制如何实现的？redis的集群模式如何实现？redis的key是如何寻址的？"><a href="#redis主从复制如何实现的？redis的集群模式如何实现？redis的key是如何寻址的？" class="headerlink" title="redis主从复制如何实现的？redis的集群模式如何实现？redis的key是如何寻址的？"></a>redis主从复制如何实现的？redis的集群模式如何实现？redis的key是如何寻址的？</h5><p><strong>主从复制实现</strong>：主节点将自己内存中的数据做一份快照，将快照发给从节点，从节点将数据恢复到内存中。之后在每次增加新数据的时候，主节点以类似于MySQL的二进制日志方式将语句发送给从节点，从节点拿到主节点发送过来的语句进行重放。</p>
+<p><strong>分片方式</strong>：</p>
+<ol>
+<li><p>客户端分片</p>
+</li>
+<li><p>基于代理的分片</p>
+</li>
+</ol>
+<ul>
+<li><p>Twemproxy</p>
+</li>
+<li><p>codis</p>
+</li>
+</ul>
+<ol start="3">
+<li>路由查询分片</li>
+</ol>
+<ul>
+<li>Redis-cluster（本身提供了自动将数据分散到Redis cluster不同节点的能力，整个数据集合的某个数据子集存储在哪个节点对于用户来说是透明的）Redis-cluster分片原理：Cluster中的有一个16384长度的槽（虚拟槽），编号分别为0-16383。每一个Master节点都会负责一部分的槽，当有某个key被映射到某个Master负责的槽，那么这个Master节点就会负责一部分的槽，当某个key被映射到某个Master负责的槽，那么这个Master负责这个key提供服务，至于哪个Master节点负责哪个槽，可以由用户指定，也可以在初始化的时候自动生成，只有Master才拥有槽的所有权。Master节点维护着一个16384/8字节的位序列，Master节点用bit来表示对于某个槽自己是否拥有。比如对于编号为1的槽，Master只能判断序列的第二位（索引从0开始）是不是为1即可。这种结构很容易添加或者删除节点。比如如果我想新添加个节点D,我需要从节点A、B、C中得部分槽大盘D上。</li>
+</ul>
+</li>
+<li><h5 id="使用Redis如何设计分布式锁？说一下实现思路？使用zk可以吗？如何实现？这两种有什么区别？"><a href="#使用Redis如何设计分布式锁？说一下实现思路？使用zk可以吗？如何实现？这两种有什么区别？" class="headerlink" title="使用Redis如何设计分布式锁？说一下实现思路？使用zk可以吗？如何实现？这两种有什么区别？"></a>使用Redis如何设计分布式锁？说一下实现思路？使用zk可以吗？如何实现？这两种有什么区别？</h5><p><strong>redis：</strong></p>
+<ol>
+<li>线程A setnx（上锁的对象，超时时的时间戳t1），如果返回true，获得锁。</li>
+<li>线程B 用get获取t1，与当前时间戳比较，判断是否超时，没超时false，若超时执行第3步；</li>
+<li>计算新的超时时间t2,使用getset命令返回t3(该值可能其他线程已经修改过),如果t1==t3，获得锁，如果t1!=t3说明锁被其他线程获取了。</li>
+<li>获取锁后，处理完业务逻辑，再去判断锁是否超时，如果没超时删除锁，如果已超时，不用处理（防止删除其他线程的锁）。</li>
+</ol>
+<p><strong>zk：</strong></p>
+<ol>
+<li>客户端对某个方法加锁时，在zk上的与该方法对应的指定节点的目录下，生成一个唯一的瞬时有序节点node1;</li>
+<li>客户端获取该路径下所有已经创建的子节点，如果发现自己创建的node1的序号是最小的，就认为这个客户端获得了锁。</li>
+<li>如果发现node1不是最小的，则监听比自己创建节点序号小的最大的节点，进入等待。</li>
+<li>获取锁后，处理完逻辑，删除自己创建的node1即可。</li>
+</ol>
+<p><strong>区别:</strong> zk性能差一些，开销大，实现简单。</p>
+</li>
+<li><h5 id="知道Redis的持久化吗？底层如何实现的？有什么优缺点？"><a href="#知道Redis的持久化吗？底层如何实现的？有什么优缺点？" class="headerlink" title="知道Redis的持久化吗？底层如何实现的？有什么优缺点？"></a>知道Redis的持久化吗？底层如何实现的？有什么优缺点？</h5><p>RDB(Redis DataBase:在不同的时间点将redis的数据生成的快照同步到磁盘等介质上):内存到硬盘的快照，定期更新。缺点：耗时，耗性能(fork+io操作)，易丢失数据。</p>
+<p>AOF(Append Only File：将redis所执行过的所有指令都记录下来，在下次redis重启时，只需要执行指令就可以了):写日志。缺点：体积大，恢复速度慢。</p>
+<p>bgsave做镜像全量持久化，aof做增量持久化。因为bgsave会消耗比较长的时间，不够实时，在停机的时候会导致大量的数据丢失，需要aof来配合，在redis实例重启时，优先使用aof来恢复内存的状态，如果没有aof日志，就会使用rdb文件来恢复。Redis会定期做aof重写，压缩aof文件日志大小。Redis4.0之后有了混合持久化的功能，将bgsave的全量和aof的增量做了融合处理，这样既保证了恢复的效率又兼顾了数据的安全性。bgsave的原理，fork和cow, fork是指redis通过创建子进程来进行bgsave操作，cow指的是copy on write，子进程创建后，父子进程共享数据段，父进程继续提供读写服务，写脏的页面数据会逐渐和子进程分离开来。</p>
+</li>
+<li><h5 id="Redis过去策略有哪些？LRU算法知道吗？写一下Java代码实现？"><a href="#Redis过去策略有哪些？LRU算法知道吗？写一下Java代码实现？" class="headerlink" title="Redis过去策略有哪些？LRU算法知道吗？写一下Java代码实现？"></a>Redis过去策略有哪些？LRU算法知道吗？写一下Java代码实现？</h5><p><strong>过期策略</strong>:</p>
+<p>定时过期(一key一定时器)，惰性过期：只有使用key时才判断key是否已过期，过期则清除。定期过期：前两者折中。</p>
+<p>LRU:new LinkedHashMap&lt;K, V&gt;(capacity, DEFAULT_LOAD_FACTORY, true);</p>
+<p>//第三个参数置为true，代表linkedlist按访问顺序排序，可作为LRU缓存；设为false代表按插入顺序排序，可作为FIFO缓存</p>
+<p><strong>LRU算法实现</strong>：</p>
+<ol>
+<li><p>通过双向链表来实现，新数据插入到链表头部；</p>
+</li>
+<li><p>每当缓存命中（即缓存数据被访问），则将数据移到链表头部；</p>
+</li>
+<li></li>
+<li>当链表满的时候，将链表尾部的数据丢弃。</li>
+</ol>
+<p><strong>LinkedHashMap</strong>：HashMap和双向链表合二为一即是LinkedHashMap。HashMap是无序的，LinkedHashMap通过维护一个额外的双向链表保证了迭代顺序。该迭代顺序可以是插入顺序（默认），也可以是访问顺序。</p>
+</li>
+<li><h5 id="缓存穿透、缓存击穿、缓存雪崩的解决方案？"><a href="#缓存穿透、缓存击穿、缓存雪崩的解决方案？" class="headerlink" title="缓存穿透、缓存击穿、缓存雪崩的解决方案？"></a>缓存穿透、缓存击穿、缓存雪崩的解决方案？</h5><p><strong>缓存穿透</strong>：指查询一个一定不存在的数据，如果从存储层差不多数据则不写入缓存，这将导致这个不存在的数据每次请求都需要到DB去查询，可能导致DB挂掉。</p>
+<p>解决方案：</p>
+<ol>
+<li>查询返回的数据为空，仍把这个空结果进行缓存，但过去时间会比较短；</li>
+<li>布隆过滤器：将所有可能存在的数据哈希到一个足够大的bitmap中，一个一定不存在的数据会被这个bitmap拦截掉，从而避免了对DB的查询。</li>
+</ol>
+<p><strong>缓存击穿</strong>：对于设置了过期时间的key，缓存在某个是时间点过期的时候，恰好这时间点对这个key有大量的并发请求过来，这些请求发现缓存过期一般都会从后端DB加载数据并回设到缓存，这个时候大并发的请求可能会瞬间把DB压垮。</p>
+<p>解决方案：</p>
+<ol>
+<li><p>使用互斥锁：当缓存失效时，不立即去load db，先使用如Redis的setnx去设置一个互斥锁，当操作成功返回时再进行load db的操作并回设缓存，否则重试get缓存的方法。</p>
+</li>
+<li><p>永远不过期：物理不过期，但逻辑过期（后台异步线程去刷新）。</p>
+</li>
+</ol>
+<p><strong>缓存雪崩</strong>：设置缓存时采用了相同的过期时间，导致缓存在某一时刻同时失效，请求全部转发到DB，DB瞬时压力过重雪崩。与缓存击穿的区别：雪崩是很多key，击穿是某一个key缓存。</p>
+<p>解决方案：将缓存失效时间分散开，比如可以在原有的失效时间基础上增加一个随机值，比如1-5分钟随机，这样每一个缓存的过期时间的重复率就会降低，就很难引发集体失效的事件。</p>
+</li>
+<li><h5 id="在选择缓存时，什么时候选择redis，什么时候选择memcached"><a href="#在选择缓存时，什么时候选择redis，什么时候选择memcached" class="headerlink" title="在选择缓存时，什么时候选择redis，什么时候选择memcached"></a>在选择缓存时，什么时候选择redis，什么时候选择memcached</h5><p>选择redis的情况：</p>
+<pre><code>1、复杂数据结构，value的数据是哈希，列表，集合，有序集合等这种情况下，会选择redis, 因为memcache无法满足这些数据结构，最典型的的使用场景是，用户订单列表，用户消息，帖子评论等。
+2、需要进行数据的持久化功能，但是注意，不要把redis当成数据库使用，如果redis挂了，内存能够快速恢复热数据，不会将压力瞬间压在数据库上，没有cache预热的过程。对于只读和数据一致性要求不高的场景可以采用持久化存储
+3、高可用，redis支持集群，可以实现主动复制，读写分离，而对于memcache如果想要实现高可用，需要进行二次开发。
+4、存储的内容比较大，memcache存储的value最大为1M。
+</code></pre><p>选择memcache的场景：</p>
+<pre><code>1、纯KV,数据量非常大的业务，使用memcache更合适，原因是，
+a)memcache的内存分配采用的是预分配内存池的管理方式，能够省去内存分配的时间，redis是临时申请空间，可能导致碎片化。
+b)虚拟内存使用，memcache将所有的数据存储在物理内存里，redis有自己的vm机制，理论上能够存储比物理内存更多的数据，当数据超量时，引发swap,把冷数据刷新到磁盘上，从这点上，数据量大时，memcache更快
+c)网络模型，memcache使用非阻塞的IO复用模型，redis也是使用非阻塞的IO复用模型，但是redis还提供了一些非KV存储之外的排序，聚合功能，复杂的CPU计算，会阻塞整个IO调度，从这点上由于redis提供的功能较多，memcache更快些
+d) 线程模型，memcache使用多线程，主线程监听，worker子线程接受请求，执行读写，这个过程可能存在锁冲突。redis使用的单线程，虽然无锁冲突，但是难以利用多核的特性提升吞吐量。
+</code></pre></li>
+<li><h5 id="缓存与数据库不一致怎么办"><a href="#缓存与数据库不一致怎么办" class="headerlink" title="缓存与数据库不一致怎么办"></a>缓存与数据库不一致怎么办</h5><p>假设采用的主存分离，读写分离的数据库，</p>
+<p>如果一个线程A先删除缓存数据，然后将数据写入到主库当中，这个时候，主库和从库同步没有完成，线程B从缓存当中读取数据失败，从从库当中读取到旧数据，然后更新至缓存，这个时候，缓存当中的就是旧的数据。</p>
+<p>发生上述不一致的原因在于，主从库数据不一致问题，加入了缓存之后，主从不一致的时间被拉长了</p>
+<p>处理思路：在从库有数据更新之后，将缓存当中的数据也同时进行更新，即当从库发生了数据更新之后，向缓存发出删除，淘汰这段时间写入的旧数据。</p>
+</li>
+<li><h5 id="主从数据库不一致如何解决"><a href="#主从数据库不一致如何解决" class="headerlink" title="主从数据库不一致如何解决"></a>主从数据库不一致如何解决</h5><p>场景描述，对于主从库，读写分离，如果主从库更新同步有时差，就会导致主从库数据的不一致</p>
+<ol>
+<li><p>忽略这个数据不一致，在数据一致性要求不高的业务下，未必需要时时一致性</p>
+</li>
+<li><p>强制读主库，使用一个高可用的主库，数据库读写都在主库，添加一个缓存，提升数据读取的性能。</p>
+</li>
+<li><p>选择性读主库，添加一个缓存，用来记录必须读主库的数据，将哪个库，哪个表，哪个主键，作为缓存的key,设置缓存失效的时间为主从库同步的时间，如果缓存当中有这个数据，直接读取主库，如果缓存当中没有这个主键，就到对应的从库中读取。</p>
+</li>
+</ol>
+</li>
+<li><h5 id="Redis常见的性能问题和解决方案"><a href="#Redis常见的性能问题和解决方案" class="headerlink" title="Redis常见的性能问题和解决方案"></a>Redis常见的性能问题和解决方案</h5><ol>
+<li><p>master最好不要做持久化工作，如RDB内存快照和AOF日志文件</p>
+</li>
+<li><p>如果数据比较重要，某个slave开启AOF备份，策略设置成每秒同步一次</p>
+</li>
+<li><p>为了主从复制的速度和连接的稳定性，master和Slave最好在一个局域网内</p>
+</li>
+<li><p>尽量避免在压力大得主库上增加从库</p>
+</li>
+<li><p>主从复制不要采用网状结构，尽量是线性结构，Master&lt;–Slave1&lt;—-Slave2 ….</p>
+</li>
+</ol>
+</li>
+<li><h5 id="Redis的数据淘汰策略有哪些"><a href="#Redis的数据淘汰策略有哪些" class="headerlink" title="Redis的数据淘汰策略有哪些"></a>Redis的数据淘汰策略有哪些</h5><p>voltile-lru 从已经设置过期时间的数据集中挑选最近最少使用的数据淘汰</p>
+<p>voltile-ttl 从已经设置过期时间的数据库集当中挑选将要过期的数据</p>
+<p>voltile-random 从已经设置过期时间的数据集任意选择淘汰数据</p>
+<p>allkeys-lru 从数据集中挑选最近最少使用的数据淘汰</p>
+<p>allkeys-random 从数据集中任意选择淘汰的数据</p>
+<p>no-eviction 禁止驱逐数据</p>
+</li>
+<li><h5 id="Redis当中有哪些数据结构"><a href="#Redis当中有哪些数据结构" class="headerlink" title="Redis当中有哪些数据结构"></a>Redis当中有哪些数据结构</h5><p>字符串String、字典Hash、列表List、集合Set、有序集合SortedSet。如果是高级用户，那么还会有，如果你是Redis中高级用户，还需要加上下面几种数据结构HyperLogLog、Geo、Pub/Sub。</p>
+</li>
+<li><h5 id="假如Redis里面有1亿个key，其中有10w个key是以某个固定的已知的前缀开头的，如果将它们全部找出来？"><a href="#假如Redis里面有1亿个key，其中有10w个key是以某个固定的已知的前缀开头的，如果将它们全部找出来？" class="headerlink" title="假如Redis里面有1亿个key，其中有10w个key是以某个固定的已知的前缀开头的，如果将它们全部找出来？"></a>假如Redis里面有1亿个key，其中有10w个key是以某个固定的已知的前缀开头的，如果将它们全部找出来？</h5><p>使用keys指令可以扫出指定模式的key列表。</p>
+<p>对方接着追问：如果这个redis正在给线上的业务提供服务，那使用keys指令会有什么问题？</p>
+<p>这个时候你要回答redis关键的一个特性：redis的单线程的。keys指令会导致线程阻塞一段时间，线上服务会停顿，直到指令执行完毕，服务才能恢复。这个时候可以使用scan指令，scan指令可以无阻塞的提取出指定模式的key列表，但是会有一定的重复概率，在客户端做一次去重就可以了，但是整体所花费的时间会比直接用keys指令长。</p>
+</li>
+<li><h5 id="使用Redis做过异步队列吗，是如何实现的"><a href="#使用Redis做过异步队列吗，是如何实现的" class="headerlink" title="使用Redis做过异步队列吗，是如何实现的"></a>使用Redis做过异步队列吗，是如何实现的</h5><p>使用list类型保存数据信息，rpush生产消息，lpop消费消息，当lpop没有消息时，可以sleep一段时间，然后再检查有没有信息，如果不想sleep的话，可以使用blpop, 在没有信息的时候，会一直阻塞，直到信息的到来。redis可以通过pub/sub主题订阅模式实现一个生产者，多个消费者，当然也存在一定的缺点，当消费者下线时，生产的消息会丢失。</p>
+</li>
+<li><h5 id="Redis如何实现延时队列"><a href="#Redis如何实现延时队列" class="headerlink" title="Redis如何实现延时队列"></a>Redis如何实现延时队列</h5><p>使用sortedset，使用时间戳做score, 消息内容作为key,调用zadd来生产消息，消费者使用zrangbyscore获取n秒之前的数据做轮询处理。</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Interview</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Tomcat相关</title>
+    <url>/2020/07/19/Tomcat%E7%9B%B8%E5%85%B3.html</url>
+    <content><![CDATA[<ol>
+<li><h5 id="Tomcat的缺省端口是多少，怎么修改？"><a href="#Tomcat的缺省端口是多少，怎么修改？" class="headerlink" title="Tomcat的缺省端口是多少，怎么修改？"></a>Tomcat的缺省端口是多少，怎么修改？</h5><p>找到Tomcat目录下的conf文件夹</p>
+<p>进入conf文件夹里面找到server.xml文件</p>
+<p>打开server.xml文件</p>
+<p>在server.xml文件里面找到下列信息</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#port=&quot;8080&quot;改成你想要的端口</span><br><span class="line">&lt;Connector connectionTimeout=&quot;20000&quot; port=&quot;8080&quot; protocol=&quot;HTTP/1.1&quot; redirectPort=&quot;8443&quot; uriEncoding=&quot;utf-8&quot;/&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><h5 id="Tomcat有哪几种Connector-运行模式-优化-？"><a href="#Tomcat有哪几种Connector-运行模式-优化-？" class="headerlink" title="Tomcat有哪几种Connector 运行模式(优化)？"></a>Tomcat有哪几种Connector 运行模式(优化)？</h5><p><strong>bio</strong>：传统的Java I/O操作，同步且阻塞IO</p>
+<p><strong>maxThreads=”150”</strong>：Tomcat使用线程来处理接收的每个请求。这个值表示Tomcat可创建的最大的线程数。默认值200。可以根据机器的时期性能和内存大小调整，一般可以在400-500。最大可以在800左右。<br><strong>minSpareThreads=”25”</strong>：Tomcat初始化时创建的线程数。默认值4。如果当前没有空闲线程，且没有超过maxThreads，一次性创建的空闲线程数量。Tomcat初始化时创建的线程数量也由此值设置。<br><strong>maxSpareThreads=”75”</strong>：一旦创建的线程超过这个值，Tomcat就会关闭不再需要的socket线程。默认值50。一旦创建的线程超过此数值，Tomcat会关闭不再需要的线程。线程数可以大致上用 “同时在线人数每秒用户操作次数系统平均操作时间” 来计算。<br><strong>acceptCount=”100”</strong>：指定当所有可以使用的处理请求的线程数都被使用时，可以放到处理队列中的请求数，超过这个数的请求将不予处理。默认值10。如果当前可用线程数为0，则将请求放入处理队列中。这个值限定了请求队列的大小，超过这个数值的请求将不予处理。<br><strong>connectionTimeout=”20000”</strong> ：网络连接超时，默认值20000，单位：毫秒。设置为0表示永不超时，这样设置有隐患的。通常可设置为30000毫秒。</p>
+<p><strong>nio</strong>：JDK1.4开始支持，同步阻塞或同步非阻塞IO。<br>指定使用NIO模型来接受HTTP请求<br>protocol=”org.apache.coyote.http11.Http11NioProtocol” 指定使用NIO模型来接受HTTP请求。默认是BlockingIO，配置为protocol=”HTTP/1.1”<br>acceptorThreadCount=”2” 使用NIO模型时接收线程的数目</p>
+<p><strong>aio(nio.2)</strong>：JDK7开始支持，异步非阻塞IO。<br>apr：Tomcat将以JNI的形式调用Apache HTTP服务器的核心动态链接库来处理文件读取或网络传输操作，从而大大地 提高Tomcat对静态文件的处理性能。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;!--&lt;Connector connectionTimeout=&quot;20000&quot; port=&quot;8000&quot; protocol=&quot;HTTP/1.1&quot; redirectPort=&quot;8443&quot; uriEncoding=&quot;utf-8&quot;/&gt;--&gt;</span><br><span class="line">&lt;!-- protocol 启用 nio模式，(tomcat8默认使用的是nio)(apr模式利用系统级异步io) --&gt;</span><br><span class="line">&lt;!-- minProcessors最小空闲连接线程数--&gt;</span><br><span class="line">&lt;!-- maxProcessors最大连接线程数--&gt;</span><br><span class="line">&lt;!-- acceptCount允许的最大连接数，应大于等于maxProcessors--&gt;</span><br><span class="line">&lt;!-- enableLookups 如果为true,requst.getRemoteHost会执行DNS查找，反向解析ip对应域名或主机名--&gt;</span><br><span class="line">&lt;Connector port=&quot;8080&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot; </span><br><span class="line">connectionTimeout=&quot;20000&quot;</span><br><span class="line">redirectPort=&quot;8443</span><br><span class="line">maxThreads=“500” </span><br><span class="line">minSpareThreads=“100” </span><br><span class="line">maxSpareThreads=“200”</span><br><span class="line">acceptCount=&quot;200&quot;</span><br><span class="line">enableLookups=&quot;false&quot;       </span><br><span class="line">/&gt;</span><br></pre></td></tr></table></figure>
+<p>其他配置<br><strong>maxHttpHeaderSize=”8192”</strong>：http请求头信息的最大程度，超过此长度的部分不予处理。一般8K。<br><strong>URIEncoding=”UTF-8”</strong> ：指定Tomcat容器的URL编码格式。<br><strong>disableUploadTimeout=”true”</strong> ：上传时是否使用超时机制<br><strong>enableLookups=”false”</strong>：是否反查域名，默认值为true。为了提高处理能力，应设置为false<br><strong>compression=”on”</strong>：打开压缩功能<br><strong>compressionMinSize=”10240”</strong> ：启用压缩的输出内容大小，默认为2KB<br><strong>noCompressionUserAgents=”gozilla, traviata”</strong>: 对于以下的浏览器，不启用压缩<br><strong>compressableMimeType=”text/html,text/xml,text/javascript,text/css,text/plain”</strong> :指定哪些资源类型需要压缩 </p>
+</li>
+<li><h5 id="Tomcat有几种部署方式？"><a href="#Tomcat有几种部署方式？" class="headerlink" title="Tomcat有几种部署方式？"></a>Tomcat有几种部署方式？</h5><ol>
+<li><p>直接把Web项目放在webapps下，Tomcat会自动将其部署</p>
+</li>
+<li><p>在server.xml文件上配置<context>节点，设置相关的属性即可</context></p>
+</li>
+<li><p>通过Catalina来进行配置:进入到conf\Catalina\localhost文件下，创建一个xml文件，该文件的名字就是站点的名字。</p>
+</li>
+</ol>
+</li>
+<li><h5 id="Tomcat容器是如何创建servlet类实例？用到了什么原理？"><a href="#Tomcat容器是如何创建servlet类实例？用到了什么原理？" class="headerlink" title="Tomcat容器是如何创建servlet类实例？用到了什么原理？"></a>Tomcat容器是如何创建servlet类实例？用到了什么原理？</h5><p>当容器启动时，会读取在webapps目录下所有的web应用中的web.xml文件，然后对xml文件进行解析，并读取servlet注册信息。然后，将每个应用中注册的servlet类都进行加载，并通过反射的方式实例化。（有时候也是在第一次请求时实例化）在servlet注册时加上如果为正数，则在一开始就实例化，如果不写或为负数，则第一次请求实例化。</p>
+</li>
+<li><h5 id="Tomcat如何优化？"><a href="#Tomcat如何优化？" class="headerlink" title="Tomcat如何优化？"></a>Tomcat如何优化？</h5><ol>
+<li><p>优化连接配置.这里以tomcat7的参数配置为例，需要修改conf/server.xml文件，修改连接数，关闭客户端dns查询。</p>
+<p><strong>URIEncoding=”UTF-8″</strong> :使得tomcat可以解析含有中文名的文件的url，真方便，不像apache里还有搞个mod_encoding，还要手工编译。</p>
+<p><strong>maxSpareThreads</strong> : 如果空闲状态的线程数多于设置的数目，则将这些线程中止，减少这个池中的线程总数。</p>
+<p><strong>minSpareThreads</strong> : 最小备用线程数，tomcat启动时的初始化的线程数。</p>
+<p><strong>enableLookups</strong> : 这个功效和Apache中的HostnameLookups一样，设为关闭。</p>
+<p><strong>connectionTimeout</strong> : connectionTimeout为网络连接超时时间毫秒数。</p>
+<p><strong>maxThreads</strong> : maxThreads Tomcat使用线程来处理接收的每个请求。这个值表示Tomcat可创建的最大的线程数，即最大并发数。</p>
+<p><strong>acceptCount</strong> : acceptCount是当线程数达到maxThreads后，后续请求会被放入一个等待队列，这个acceptCount是这个队列的大小，如果这个队列也满了，就直接refuse connection。</p>
+<p><strong>maxProcessors与minProcessors</strong> : 在 Java中线程是程序运行时的路径，是在一个程序中与其它控制线程无关的、能够独立运行的代码段。它们共享相同的地址空间。多线程帮助程序员写出CPU最 大利用率的高效程序，使空闲时间保持最低，从而接受更多的请求。</p>
+<p>通常Windows是1000个左右，Linux是2000个左右。</p>
+<p><strong>useURIValidationHack</strong>:我们来看一下tomcat中的一段源码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">【security】</span><br><span class="line"></span><br><span class="line">if (connector.getUseURIValidationHack()) &#123;</span><br><span class="line"></span><br><span class="line">String uri = validate(request.getRequestURI());</span><br><span class="line"></span><br><span class="line">if (uri == null) &#123;</span><br><span class="line"></span><br><span class="line">res.setStatus(400);</span><br><span class="line"></span><br><span class="line">res.setMessage(“Invalid URI”);</span><br><span class="line"></span><br><span class="line">throw new IOException(“Invalid URI”);</span><br><span class="line"></span><br><span class="line">&#125; else &#123;</span><br><span class="line"></span><br><span class="line">req.requestURI().setString(uri);</span><br><span class="line"></span><br><span class="line">// Redoing the URI decoding</span><br><span class="line"></span><br><span class="line">req.decodedURI().duplicate(req.requestURI());</span><br><span class="line"></span><br><span class="line">req.getURLDecoder().convert(req.decodedURI(), true);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到如果把useURIValidationHack设成”false”，可以减少它对一些url的不必要的检查从而减省开销。</p>
+<p><strong>enableLookups=”false”</strong> ： 为了消除DNS查询对性能的影响我们可以关闭DNS查询，方式是修改server.xml文件中的enableLookups参数值。</p>
+<p><strong>disableUploadTimeout</strong> ：类似于Apache中的keeyalive一样</p>
+<p>给Tomcat配置gzip压缩(HTTP压缩)功能</p>
+<p><strong>compression=”on” compressionMinSize=”2048″</strong></p>
+<p><strong>compressableMimeType=”text/html,text/xml,text/JavaScript,text/css,text/plain”</strong></p>
+<p>HTTP 压缩可以大大提高浏览网站的速度，它的原理是，在客户端请求网页后，从服务器端将网页文件压缩，再下载到客户端，由客户端的浏览器负责解压缩并浏览。相对于普通的浏览过程HTML,CSS,javascript , Text ，它可以节省40%左右的流量。更为重要的是，它可以对动态生成的，包括CGI、PHP , JSP , ASP , Servlet,SHTML等输出的网页也能进行压缩，压缩效率惊人。</p>
+<p><strong>compression=”on”</strong> : 打开压缩功能</p>
+<p><strong>compressionMinSize=”2048″</strong>:  启用压缩的输出内容大小，这里面默认为2KB</p>
+<p><strong>noCompressionUserAgents=”gozilla, traviata”</strong>  对于以下的浏览器，不启用压缩</p>
+<p><strong>compressableMimeType=”text/html,text/xml”</strong>　压缩类型</p>
+<p>最后不要忘了把8443端口的地方也加上同样的配置，因为如果我们走https协议的话，我们将会用到8443端口这个段的配置，对吧？</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;!–enable tomcat ssl–&gt;</span><br><span class="line"></span><br><span class="line">&lt;Connector port=”8443″ protocol=”HTTP/1.1″</span><br><span class="line"></span><br><span class="line">URIEncoding=”UTF-8″ minSpareThreads=”25″ maxSpareThreads=”75″</span><br><span class="line"></span><br><span class="line">enableLookups=”false” disableUploadTimeout=”true” connectionTimeout=”20000″</span><br><span class="line"></span><br><span class="line">acceptCount=”300″ maxThreads=”300″ maxProcessors=”1000″ minProcessors=”5″</span><br><span class="line"></span><br><span class="line">useURIValidationHack=”false”</span><br><span class="line"></span><br><span class="line">compression=”on” compressionMinSize=”2048″</span><br><span class="line"></span><br><span class="line">compressableMimeType=”text/html,text/xml,text/javascript,text/css,text/plain”</span><br><span class="line"></span><br><span class="line">SSLEnabled=”true”</span><br><span class="line"></span><br><span class="line">scheme=”https” secure=”true”</span><br><span class="line"></span><br><span class="line">clientAuth=”false” sslProtocol=”TLS”</span><br><span class="line"></span><br><span class="line">keystoreFile=”d:/tomcat2/conf/shnlap93.jks” keystorePass=”aaaaaa”</span><br><span class="line"></span><br><span class="line">/&gt;</span><br></pre></td></tr></table></figure>
+<p>好了，所有的Tomcat优化的地方都加上了。</p>
+</li>
+</ol>
+</li>
+<li><h5 id="内存调优"><a href="#内存调优" class="headerlink" title="内存调优"></a>内存调优</h5><p>内存方式的设置是在catalina.sh中，调整一下JAVA_OPTS变量即可，因为后面的启动参数会把JAVA_OPTS作为JVM的启动参数来处理。<br>具体设置如下： </p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">JAVA_OPTS=&quot;$JAVA_OPTS -Xmx3550m -Xms3550m -Xss128k -XX:NewRatio=4 -XX:SurvivorRatio=4&quot;</span><br></pre></td></tr></table></figure>
+<p>其各项参数如下：<br><strong>-Xmx3550m</strong>：设置JVM最大可用内存为3550M。<br><strong>-Xms3550m</strong>：设置JVM促使内存为3550m。此值可以设置与-Xmx相同，以避免每次垃圾回收完成后JVM重新分配内存。<br><strong>-Xmn2g</strong>：设置年轻代大小为2G。整个堆大小=年轻代大小 + 年老代大小 + 持久代大小。持久代一般固定大小为64m，所以增大年轻代后，将会减小年老代大小。此值对系统性能影响较大，Sun官方推荐配置为整个堆的3/8。<br><strong>-Xss128k</strong>：设置每个线程的堆栈大小。JDK5.0以后每个线程堆栈大小为1M，以前每个线程堆栈大小为256K。更具应用的线程所需内存大小进行调整。在相同物理内存下，减小这个值能生成更多的线程。但是操作系统对一个进程内的线程数还是有限制的，不能无限生成，经验值在3000~5000左右。<br><strong>-XX:NewRatio=4</strong>:设置年轻代（包括Eden和两个Survivor区）与年老代的比值（除去持久代）。设置为4，则年轻代与年老代所占比值为1：4，年轻代占整个堆栈的1/5<br><strong>-XX:SurvivorRatio=4</strong>：设置年轻代中Eden区与Survivor区的大小比值。设置为4，则两个Survivor区与一个Eden区的比值为2:4，一个Survivor区占整个年轻代的1/6<br><strong>-XX:MaxPermSize=16m</strong>:设置持久代大小为16m。<br><strong>-XX:MaxTenuringThreshold=0</strong>：设置垃圾最大年龄。如果设置为0的话，则年轻代对象不经过Survivor区，直接进入年老代。对于年老代比较多的应用，可以提高效率。如果将此值设置为一个较大值，则年轻代对象会在Survivor区进行多次复制，这样可以增加对象再年轻代的存活时间，增加在年轻代即被回收的概论。 </p>
+</li>
+<li><h5 id="垃圾回收策略调优"><a href="#垃圾回收策略调优" class="headerlink" title="垃圾回收策略调优"></a>垃圾回收策略调优</h5><p>垃圾回收的设置也是在catalina.sh中，调整JAVA_OPTS变量。<br>具体设置如下： </p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">JAVA_OPTS=&quot;$JAVA_OPTS -Xmx3550m -Xms3550m -Xss128k -XX:+UseParallelGC  -XX:MaxGCPauseMillis=100&quot;</span><br></pre></td></tr></table></figure>
+<p>具体的垃圾回收策略及相应策略的各项参数如下：<br>串行收集器（JDK1.5以前主要的回收方式）<br><strong>-XX:+UseSerialGC</strong>:设置串行收集器<br>并行收集器（吞吐量优先）<br>示例： </p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">java -Xmx3550m -Xms3550m -Xmn2g -Xss128k -XX:+UseParallelGC  -XX:MaxGCPauseMillis=100</span><br></pre></td></tr></table></figure>
+<p><strong>-XX:+UseParallelGC</strong>：选择垃圾收集器为并行收集器。此配置仅对年轻代有效。即上述配置下，年轻代使用并发收集，而年老代仍旧使用串行收集。<br><strong>-XX:ParallelGCThreads=20</strong>：配置并行收集器的线程数，即：同时多少个线程一起进行垃圾回收。此值最好配置与处理器数目相等。<br><strong>-XX:+UseParallelOldGC</strong>：配置年老代垃圾收集方式为并行收集。JDK6.0支持对年老代并行收集<br><strong>-XX:MaxGCPauseMillis=100</strong>:设置每次年轻代垃圾回收的最长时间，如果无法满足此时间，JVM会自动调整年轻代大小，以满足此值。<br><strong>-XX:+UseAdaptiveSizePolicy</strong>：设置此选项后，并行收集器会自动选择年轻代区大小和相应的Survivor区比例，以达到目标系统规定的最低相应时间或者收集频率等，此值建议使用并行收集器时，一直打开。<br>并发收集器（响应时间优先）<br>示例：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">java -Xmx3550m -Xms3550m -Xmn2g -Xss128k -XX:+UseConcMarkSweepGC</span><br></pre></td></tr></table></figure>
+<p><strong>-XX:+UseConcMarkSweepGC</strong>：设置年老代为并发收集。测试中配置这个以后，-XX:NewRatio=4的配置失效了，原因不明。所以，此时年轻代大小最好用-Xmn设置。<br><strong>-XX:+UseParNewGC</strong>: 设置年轻代为并行收集。可与CMS收集同时使用。JDK5.0以上，JVM会根据系统配置自行设置，所以无需再设置此值。<br><strong>-XX:CMSFullGCsBeforeCompaction</strong>：由于并发收集器不对内存空间进行压缩、整理，所以运行一段时间以后会产生“碎片”，使得运行效率降低。此值设置运行多少次GC以后对内存空间进行压缩、整理。<br><strong>-XX:+UseCMSCompactAtFullCollection</strong>：打开对年老代的压缩。可能会影响性能，但是可以消除碎片 </p>
+</li>
+<li><h5 id="共享session处理"><a href="#共享session处理" class="headerlink" title="共享session处理"></a>共享session处理</h5><p>目前的处理方式有如下几种： </p>
+<ol>
+<li>使用Tomcat本身的Session复制功能<br>参考<a href="http://ajita.iteye.com/blog/1715312（Session复制的配置）" target="_blank" rel="noopener">http://ajita.iteye.com/blog/1715312（Session复制的配置）</a><br>方案的有点是配置简单，缺点是当集群数量较多时，Session复制的时间会比较长，影响响应的效率 </li>
+<li>使用第三方来存放共享Session<br>目前用的较多的是使用memcached来管理共享Session，借助于memcached-sesson-manager来进行Tomcat的Session管理<br>参考<a href="http://ajita.iteye.com/blog/1716320（使用MSM管理Tomcat集群session）" target="_blank" rel="noopener">http://ajita.iteye.com/blog/1716320（使用MSM管理Tomcat集群session）</a> </li>
+<li>使用黏性session的策略<br>对于会话要求不太强（不涉及到计费，失败了允许重新请求下等）的场合，同一个用户的session可以由nginx或者apache交给同一个Tomcat来处理，这就是所谓的session sticky策略，目前应用也比较多<br>参考：<a href="http://ajita.iteye.com/blog/1848665（tomcat" target="_blank" rel="noopener">http://ajita.iteye.com/blog/1848665（tomcat</a> session sticky）<br>nginx默认不包含session sticky模块，需要重新编译才行（windows下我也不知道怎么重新编译）<br>优点是处理效率高多了，缺点是强会话要求的场合不合适 </li>
+</ol>
+</li>
+<li><h5 id="添加JMS远程监控"><a href="#添加JMS远程监控" class="headerlink" title="添加JMS远程监控"></a>添加JMS远程监控</h5><p>对于部署在局域网内其它机器上的Tomcat，可以打开JMX监控端口，局域网其它机器就可以通过这个端口查看一些常用的参数（但一些比较复杂的功能不支持），同样是在JVM启动参数中配置即可，配置如下：<br><strong>-Dcom.sun.management.jmxremote.ssl=false</strong>  </p>
+<p><strong>-Dcom.sun.management.jmxremote.authenticate=false</strong><br><strong>-Djava.rmi.server.hostname=192.168.71.38</strong> 设置JVM的JMS监控监听的IP地址，主要是为了防止错误的监听成127.0.0.1这个内网地址<br><strong>-Dcom.sun.management.jmxremote.port=1090</strong> 设置JVM的JMS监控的端口<br><strong>-Dcom.sun.management.jmxremote.ssl=false</strong> 设置JVM的JMS监控不实用SSL<br><strong>-Dcom.sun.management.jmxremote.authenticate=false</strong> 设置JVM的JMS监控不需要认证</p>
+</li>
+<li><h5 id="专业的分析工具有哪些"><a href="#专业的分析工具有哪些" class="headerlink" title="专业的分析工具有哪些"></a>专业的分析工具有哪些</h5><p>IBM ISA，JProfiler、probe 等，具体监控及分析方式去网上搜索即可</p>
+</li>
+<li><h5 id="关于Tomcat的session数目"><a href="#关于Tomcat的session数目" class="headerlink" title="关于Tomcat的session数目"></a>关于Tomcat的session数目</h5><p>这个可以直接从Tomcat的web管理界面去查看即可 ；<br>或者借助于第三方工具Lambda Probe来查看，它相对于Tomcat自带的管理稍微多了点功能，但也不多.</p>
+</li>
+<li><h5 id="监视Tomcat的内存使用情况"><a href="#监视Tomcat的内存使用情况" class="headerlink" title="监视Tomcat的内存使用情况"></a>监视Tomcat的内存使用情况</h5><p>使用JDK自带的jconsole可以比较明了的看到内存的使用情况，线程的状态，当前加载的类的总量等；<br>JDK自带的jvisualvm可以下载插件（如GC等），可以查看更丰富的信息。如果是分析本地的Tomcat的话，还可以进行内存抽样等，检查每个类的使用情况</p>
+</li>
+<li><h5 id="打印类的加载情况以及对象回收情况"><a href="#打印类的加载情况以及对象回收情况" class="headerlink" title="打印类的加载情况以及对象回收情况"></a>打印类的加载情况以及对象回收情况</h5><p>这个可以通过配置JVM的启动参数，打印这些信息（到屏幕（默认也会到catalina.log中）或者文件），具体参数如下：<br><strong>-XX:+PrintGC</strong>：输出形式：[GC 118250K-&gt;113543K(130112K), 0.0094143 secs] [Full GC 121376K-&gt;10414K(130112K), 0.0650971 secs]<br><strong>-XX:+PrintGCDetails</strong>：输出形式：[GC [DefNew: 8614K-&gt;781K(9088K), 0.0123035 secs] 118250K-&gt;113543K(130112K), 0.0124633 secs] [GC [DefNew: 8614K-&gt;8614K(9088K), 0.0000665 secs][Tenured: 112761K-&gt;10414K(121024K), 0.0433488 secs] 121376K-&gt;10414K(130112K), 0.0436268 secs]<br><strong>-XX:+PrintGCTimeStamps -XX:+PrintGC</strong>：PrintGCTimeStamps可与上面两个混合使用，输出形式：11.851: [GC 98328K-&gt;93620K(130112K), 0.0082960 secs]<br><strong>-XX:+PrintGCApplicationConcurrentTime</strong>：打印每次垃圾回收前，程序未中断的执行时间。可与上面混合使用。输出形式：Application time: 0.5291524 seconds<br><strong>-XX:+PrintGCApplicationStoppedTime</strong>：打印垃圾回收期间程序暂停的时间。可与上面混合使用。输出形式：Total time for which application threads were stopped: 0.0468229 seconds<br><strong>-XX:PrintHeapAtGC</strong>: 打印GC前后的详细堆栈信息<br><strong>-Xloggc:filename</strong>:与上面几个配合使用，把相关日志信息记录到文件以便分析<br><strong>-verbose:clas</strong>s 监视加载的类的情况<br><strong>-verbose:gc</strong> 在虚拟机发生内存回收时在输出设备显示信息<br><strong>-verbose:jni</strong> 输出native方法调用的相关情况，一般用于诊断jni调用错误信息</p>
+</li>
+<li><h5 id="Tomcat一个请求完整过程"><a href="#Tomcat一个请求完整过程" class="headerlink" title="Tomcat一个请求完整过程"></a>Tomcat一个请求完整过程</h5><pre><code>Ng:(nginx)
+upstream yy_001{
+    server 10.99.99.99:8080; 
+    server 10.99.99.100:8080; 
+    hash $**; 
+    healthcheck_enabled; 
+    healthcheck_delay 3000; 
+    healthcheck_timeout 1000; 
+    healthcheck_failcount 2; 
+    healthcheck_send &apos;GET /healthcheck.html HTTP/1.0&apos; &apos;Host: wo.com&apos; 
+    &apos;Connection: close&apos;; 
+}
+server {
+    include base.conf;
+    server_name  wo.de.tian;
+    ...
+    location /yy/ { 
+        proxy_pass http://yy_001;
+    }
+}
+</code></pre><p>首先 dns 解析 wo.de.tian机器，一般是ng服务器ip地址<br>然后 ng根据server的配置，寻找路径为 yy/的机器列表，ip和端口<br>最后 选择其中一台机器进行访问—-&gt;下面为详细过程</p>
+<ol>
+<li>请求被发送到本机端口8080，被在那里侦听的Coyote HTTP/1.1 Connector获得 </li>
+<li>Connector把该请求交给它所在的Service的Engine来处理，并等待来自Engine的回应 </li>
+<li>Engine获得请求localhost/yy/index.jsp，匹配它所拥有的所有虚拟主机Host </li>
+<li>Engine匹配到名为localhost的Host（即使匹配不到也把请求交给该Host处理，因为该Host被定义为该Engine的默认主机） </li>
+<li>localhost Host获得请求/yy/index.jsp，匹配它所拥有的所有Context </li>
+<li>Host匹配到路径为/yy的Context（如果匹配不到就把该请求交给路径名为”“的Context去处理） </li>
+<li>path=”/yy”的Context获得请求/index.jsp，在它的mapping table中寻找对应的servlet </li>
+<li>Context匹配到URL PATTERN为*.jsp的servlet，对应于JspServlet类 </li>
+<li>构造HttpServletRequest对象和HttpServletResponse对象，作为参数调用JspServlet的doGet或doPost方法 </li>
+<li>Context把执行完了之后的HttpServletResponse对象返回给Host </li>
+<li>Host把HttpServletResponse对象返回给Engine </li>
+<li>Engine把HttpServletResponse对象返回给Connector </li>
+<li>Connector把HttpServletResponse对象返回给客户browser</li>
+</ol>
+</li>
+<li><h5 id="Tomcat工作模式？"><a href="#Tomcat工作模式？" class="headerlink" title="Tomcat工作模式？"></a>Tomcat工作模式？</h5><p>Tomcat是一个JSP/Servlet容器。其作为Servlet容器，有三种工作模式：独立的Servlet容器、进程内的Servlet容器和进程外的Servlet容器。</p>
+<p>进入Tomcat的请求可以根据Tomcat的工作模式分为如下两类：</p>
+<p>Tomcat作为应用程序服务器：请求来自于前端的web服务器，这可能是Apache, IIS, Nginx等；</p>
+<p>Tomcat作为独立服务器：请求来自于web浏览器；</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Interview</category>
+      </categories>
+  </entry>
+  <entry>
     <title>Oracle纵表转换横表</title>
     <url>/2020/07/17/Oracle%E7%BA%B5%E8%A1%A8%E8%BD%AC%E6%8D%A2%E6%88%90%E6%A8%AA%E8%A1%A8.html</url>
     <content><![CDATA[<p>1、表结构以及建表语句</p>
@@ -287,6 +571,350 @@
       <tags>
         <tag>Git</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>MySQL相关</title>
+    <url>/2020/01/03/MySQL%E7%9B%B8%E5%85%B3.html</url>
+    <content><![CDATA[<ol>
+<li><h5 id="数据库的三范式"><a href="#数据库的三范式" class="headerlink" title="数据库的三范式"></a>数据库的三范式</h5><ol>
+<li>表中的列只能含有原子性(不可再分)的值。</li>
+<li>满足第一范式，没有部分依赖。</li>
+<li>满足第二范式，没有传递依赖。</li>
+</ol>
+</li>
+<li><h5 id="有哪些数据库优化方面的经验"><a href="#有哪些数据库优化方面的经验" class="headerlink" title="有哪些数据库优化方面的经验?"></a>有哪些数据库优化方面的经验?</h5><ol>
+<li>用PreparedStatement， 一般来说比Statement性能高：一个sql     发给服务器去执行，涉及步骤：语法检查、语义分析， 编译，缓存.</li>
+<li>有外键约束会影响插入和删除性能，如果程序能够保证数据的完整性，那在设计数据库时就去掉外键。</li>
+<li>表中允许适当冗余，譬如，主题帖的回复数量和最后回复时间等.</li>
+<li>UNION ALL 要比UNION快很多，所以，如果可以确认合并的两个结果集中不包含重复数据且不需要排序时的话，那么就使用UNION ALL。 &gt;&gt;UNION和UNION ALL关键字都是将两个结果集合并为一个，但这两者从使用和效率上来说都有所不同。 &gt;1. 对重复结果的处理：UNION在进行表链接后会筛选掉重复的记录，Union All不会去除重复记录。 &gt;2. 对排序的处理：Union将会按照字段的顺序进行排序；UNION ALL只是简单的将两个结果合并后就返回。</li>
+</ol>
+</li>
+<li><h5 id="请简述常用的索引有哪些种类"><a href="#请简述常用的索引有哪些种类" class="headerlink" title="请简述常用的索引有哪些种类?"></a>请简述常用的索引有哪些种类?</h5><ol>
+<li>普通索引: 即针对数据库表创建索引</li>
+<li>唯一索引: 与普通索引类似，不同的就是：MySQL数据库索引列的值必须唯一，但允许有空值</li>
+<li>主键索引: 它是一种特殊的唯一索引，不允许有空值。一般是在建表的时候同时创建主键索引</li>
+<li>组合索引: 为了进一步榨取MySQL的效率，就要考虑建立组合索引。即将数据库表中的多个字段联合起来作为一个组合索引。</li>
+</ol>
+</li>
+<li><h5 id="MySQL数据库索引的工作机制是什么？"><a href="#MySQL数据库索引的工作机制是什么？" class="headerlink" title="MySQL数据库索引的工作机制是什么？"></a>MySQL数据库索引的工作机制是什么？</h5><p>数据库索引，是数据库管理系统中一个排序的数据结构，以协助快速查询、更新数据库表中数据。索引的实现通常使用B树及其变种B+树</p>
+</li>
+<li><h5 id="MySQL的基本操作命令："><a href="#MySQL的基本操作命令：" class="headerlink" title="MySQL的基本操作命令："></a>MySQL的基本操作命令：</h5><p>mysql -u root -p</p>
+<p>show databases</p>
+<p>use databasename</p>
+<p>show tables</p>
+<p>describe table_name</p>
+</li>
+<li><h5 id="MySQL的复制原来以及流程。"><a href="#MySQL的复制原来以及流程。" class="headerlink" title="MySQL的复制原来以及流程。"></a>MySQL的复制原来以及流程。</h5><p>Mysql内建的复制功能是构建大型，高性能应用程序的基础。将Mysql的数据分布到多个系统上去，这种分布的机制，是通过将Mysql的某一台主机的数据复制到其它主机（slaves）上，并重新执行一遍来实现的。 * 复制过程中一个服务器充当主服务器，而一个或多个其它服务器充当从服务器。主服务器将更新写入二进制日志文件，并维护文件的一个索引以跟踪日志循环。这些日志可以记录发送到从服务器的更新。 当一个从服务器连接主服务器时，它通知主服务器在日志中读取的最后一次成功更新的位置。从服务器接收从那时起发生的任何更新，然后封锁并等待主服务器通知新的更新。 过程如下 1. 主服务器把更新记录到二进制日志文件中。 2. 从服务器把主服务器的二进制日志拷贝到自己的中继日志（replay log）中。 3. 从服务器重做中继日志中的时间，把更新应用到自己的数据库上。</p>
+</li>
+<li><h5 id="MySQL支持的复制类型？"><a href="#MySQL支持的复制类型？" class="headerlink" title="MySQL支持的复制类型？"></a>MySQL支持的复制类型？</h5><ol>
+<li><p>基于语句的复制： 在主服务器上执行的SQL语句，在从服务器上执行同样的语句。MySQL默认采用基于语句的复制，效率比较高。 一旦发现没法精确复制时，会自动选着基于行的复制。</p>
+</li>
+<li><p>基于行的复制：把改变的内容复制过去，而不是把命令在从服务器上执行一遍. 从mysql5.0开始支持</p>
+</li>
+<li><p>混合类型的复制: 默认采用基于语句的复制，一旦发现基于语句的无法精确的复制时，就会采用基于行的复制。</p>
+</li>
+</ol>
+</li>
+<li><h5 id="MySQL中myisam与innodb的区别？"><a href="#MySQL中myisam与innodb的区别？" class="headerlink" title="MySQL中myisam与innodb的区别？"></a>MySQL中myisam与innodb的区别？</h5><ol>
+<li><p>事务支持</p>
+<p>MyISAM：强调的是性能每次查询具有原子性,其执行数度比InnoDB类型更快，但是不提供事务支持。InnoDB：提供事务支持事务，外部键等高级数据库功能。 具有事务(commit)、回滚(rollback)和崩溃修复能力(crash recovery capabilities)的事务安全。</p>
+</li>
+<li><p>InnoDB支持行级锁，而MyISAM支持表级锁.</p>
+</li>
+<li><p>InnoDB支持MVCC, 而MyISAM不支持</p>
+</li>
+<li><p>InnoDB支持外键，而MyISAM不支持</p>
+</li>
+<li><p>InnoDB不支持全文索引，而MyISAM支持。</p>
+</li>
+<li><p>可移植性、备份及恢复     &gt; <em>MyISAM**：数据是以文件的形式存储，所以在跨平台的数据转移中会很方便。在备份和恢复时可单独针对某个表进行操作。</em>     <em>&gt;</em> InnoDB：免费的方案可以是拷贝数据文件、备份     binlog，或者用     mysqldump，在数据量达到几十G的时候就相对痛苦了</p>
+</li>
+<li><p>存储结构 &gt; <em>MyISAM**：每个MyISAM在磁盘上存储成三个文件。第一个文件的名字以表的名字开始，扩展名指出文件类型。.frm文件存储表定义。数据文件的扩展名为.MYD (MYData)。索引文件的扩展名是.MYI (MYIndex)。 &gt;</em> InnoDB：所有的表都保存在同一个数据文件中（也可能是多个文件，或者是独立的表空间文件），InnoDB表的大小只受限于操作系统文件的大小，一般为2GB。</p>
+</li>
+</ol>
+</li>
+<li><h5 id="MySQL中varchar与char的区别以及varchar-50-中的50代表的涵义？"><a href="#MySQL中varchar与char的区别以及varchar-50-中的50代表的涵义？" class="headerlink" title="MySQL中varchar与char的区别以及varchar(50)中的50代表的涵义？"></a>MySQL中varchar与char的区别以及varchar(50)中的50代表的涵义？</h5><ol>
+<li>varchar与char的区别：char定长、varchar变长的类型。</li>
+<li>varchar（50）中的含义：最多存放50个字节</li>
+</ol>
+</li>
+<li><h5 id="MySQL中InnoDB支持的四种事务隔离级别名称，以及之间的区别？"><a href="#MySQL中InnoDB支持的四种事务隔离级别名称，以及之间的区别？" class="headerlink" title="MySQL中InnoDB支持的四种事务隔离级别名称，以及之间的区别？"></a>MySQL中InnoDB支持的四种事务隔离级别名称，以及之间的区别？</h5></li>
+<li><p>Read Uncommitted (读取未提交内容)</p>
+<p>所有事务都可以看到其他未提交事务的执行结果，本级别很少用于实际开发，因为它的性能也不比其他级别好多少，读取未提交的数据、也被称之为脏读（Dirty Read）。</p>
+</li>
+<li><p>Read committed（读取提交内容）</p>
+<p>这是大多数据库系统的默认级别（但不是MySQL默认的）。他满足了隔离的简单意义：一个事务只能看到已提交事务所做的该变。这个隔离级别也支持所谓的不可重复读（NonRepeatable Read），因为同一事务的其他实力在该实例处理期间可能有新的commit，所以同一个select可能返回不同的结果。</p>
+</li>
+<li><p>Repeatable Read （可重复读）</p>
+<p>这是MySQL默认的隔离级别，它确保同一事务的多个实例在并发读取数据时，还会看到同样的数据行。不过理论上，这会导致另一个棘手的问题：幻读（Phantom Read）。简单的说，幻读指当用户读取某一范围的数据行时，另一个事务又在该范围内插入新行，当用户再读取该范围的数据行时，会发现有新的“幻影”行。InnoDB和Falcon存储引擎通过多版本并发控制（MVCC，Multiversion Concurrency Control 间隙锁）机制解决了该问题。注：其实多版本只是解决不可重复读问题，而加上间隙锁（也就是它这里所谓的并发控制）才解决了幻读问题。</p>
+</li>
+<li><p>Serializable（可串行化）</p>
+<p>这是最高的隔离级别，他通过事务排序，使之不能相互冲突，从而解决幻读问题，简而言之，它是在每个读数据上加上共享锁。在这个级别可能导致大量的超时现象和锁竞争。</p>
+</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>隔离级别</th>
+<th>Dirty Read</th>
+<th>NonRepeatable Read</th>
+<th>Phantom Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read uncommitted</td>
+<td>可能</td>
+<td>可能</td>
+<td>可能</td>
+</tr>
+<tr>
+<td>Read committed</td>
+<td>不可能</td>
+<td>可能</td>
+<td>可能</td>
+</tr>
+<tr>
+<td>Repeatable read</td>
+<td>不可能</td>
+<td>不可能</td>
+<td>可能</td>
+</tr>
+<tr>
+<td>SERIALIZABLE</td>
+<td>不可能</td>
+<td>不可能</td>
+<td>不可能</td>
+</tr>
+</tbody>
+</table>
+<ol start="10">
+<li><h5 id="MySQL中InnoDB引擎的行锁是通过加在什么上完成（或称实现）的？"><a href="#MySQL中InnoDB引擎的行锁是通过加在什么上完成（或称实现）的？" class="headerlink" title="MySQL中InnoDB引擎的行锁是通过加在什么上完成（或称实现）的？"></a>MySQL中InnoDB引擎的行锁是通过加在什么上完成（或称实现）的？</h5><p>InnoDB行锁是通过给索引上的索引项加锁来实现的，这一点MySQL与Oracle不通，后者是通过在数据块中对相应数据行加锁来实现的。InnoDB这种行锁实现的特点意味着：只有通过索引条件检索数据，InnoDB才能使用行家锁，否则将使用表级锁！</p>
+</li>
+<li><h5 id="若一张表中只有一个字段VARCHAR-N-类型，utf8编码，则N最大值为多少-精确到数量级即可"><a href="#若一张表中只有一个字段VARCHAR-N-类型，utf8编码，则N最大值为多少-精确到数量级即可" class="headerlink" title="若一张表中只有一个字段VARCHAR(N)类型，utf8编码，则N最大值为多少(精确到数量级即可)?"></a>若一张表中只有一个字段VARCHAR(N)类型，utf8编码，则N最大值为多少(精确到数量级即可)?</h5><p>N的最大值计算算方法为：（65535-1-2）/ 3。</p>
+<p>由于utf8的每个字符最多占3个字节，而MySQL定义行的长度不能超过65535，减1的原因是实际存储从第二个字符开始，减去2的原因是为要在列长度存储实际的字符长度。</p>
+</li>
+<li><h5 id="表中有大字段X（例如：text类型），且字段X不会经常更新，以读为为主，将该字段拆成子表好处是什么？"><a href="#表中有大字段X（例如：text类型），且字段X不会经常更新，以读为为主，将该字段拆成子表好处是什么？" class="headerlink" title="表中有大字段X（例如：text类型），且字段X不会经常更新，以读为为主，将该字段拆成子表好处是什么？"></a>表中有大字段X（例如：text类型），且字段X不会经常更新，以读为为主，将该字段拆成子表好处是什么？</h5><p>如果字段里有大字段（text、blob）类型的，而且这些字段访问并不多、这时候放一起就变成缺点了。MySQL数据库的记录存储是按行存储的，数据块大小固定的(16k),每条记录越小，相同的块存储的记录就越多。此时应该讲大字段拆分，这样应付大部分小字段查询，就能提高效率，当要查询大字段时，进行关联查询。</p>
+</li>
+<li><h5 id="SELECT-和-SELECT-全部字段-的2种写法有何优缺点"><a href="#SELECT-和-SELECT-全部字段-的2种写法有何优缺点" class="headerlink" title="[SELECT *] 和[SELECT 全部字段]的2种写法有何优缺点?"></a>[SELECT *] 和[SELECT 全部字段]的2种写法有何优缺点?</h5><ol>
+<li>前者要解析数据字典，后者不需要。</li>
+<li>结果输出顺序，前者与建表列顺序相同，后者按指定字段顺序。</li>
+<li>表字段改名，前者不需要修改、后者需要修改。</li>
+<li>后者可以建立索引进行优化，前者无法优化。</li>
+<li>后者的可读性比前者高。</li>
+</ol>
+</li>
+<li><h5 id="HAVNG-子句-和-WHERE的异同点"><a href="#HAVNG-子句-和-WHERE的异同点" class="headerlink" title="HAVNG 子句 和 WHERE的异同点?"></a>HAVNG 子句 和 WHERE的异同点?</h5><ol>
+<li>语法上where用于表中列名、having用于select结果的别名。</li>
+<li>影响范围：where从读取数据的行数，having放回客户端的行数</li>
+<li>索引：where可以使用索引，having不能使用索引，只能在临时结果集使用。</li>
+<li>where后面不能使用聚合函数，having是专门使用聚合函数的。</li>
+</ol>
+</li>
+<li><h5 id="MySQL当记录不存在时insert-当记录存在时update，语句怎么写？"><a href="#MySQL当记录不存在时insert-当记录存在时update，语句怎么写？" class="headerlink" title="MySQL当记录不存在时insert,当记录存在时update，语句怎么写？"></a>MySQL当记录不存在时insert,当记录存在时update，语句怎么写？</h5></li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">INSERT INTO table (a,b,c) VALUES (1,2,3) ON DUPLICATE KEY UPDATE c=c+1;</span><br></pre></td></tr></table></figure>
+<ol start="16">
+<li><h5 id="MySQL的insert和update的select语句语法"><a href="#MySQL的insert和update的select语句语法" class="headerlink" title="MySQL的insert和update的select语句语法"></a>MySQL的insert和update的select语句语法</h5></li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">insert into student (stuid,stuname,deptid) select 10,&apos;xzm&apos;,3 from student where stuid &gt; 8;</span><br><span class="line">update student a inner join student b on b.stuID=10 set a.stuname=concat(b.stuname, b.stuID) where a.stuID=10 ;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Interview</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>设计模式相关</title>
+    <url>/2020/01/03/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%9B%B8%E5%85%B3.html</url>
+    <content><![CDATA[<ol>
+<li><h5 id="请列举出在JDK中几个常用的设计模式？"><a href="#请列举出在JDK中几个常用的设计模式？" class="headerlink" title="请列举出在JDK中几个常用的设计模式？"></a>请列举出在JDK中几个常用的设计模式？</h5><p>单类模式（Singleton pattern）用于Runtime，Calendar和其他的一些类中。工厂模式（Factory pattern）被用于各种不可变的类如Boolean，像Boolean.valueOf，观察者模式（Observer pattern）被用于Swing和很多的事件监听中。装饰器设计模式（Decorator design pattern）被用于多个Java Io类中。</p>
+</li>
+<li><h5 id="什么是设计模式？你是否在你的代码里使用过任何设计模式？"><a href="#什么是设计模式？你是否在你的代码里使用过任何设计模式？" class="headerlink" title="什么是设计模式？你是否在你的代码里使用过任何设计模式？"></a>什么是设计模式？你是否在你的代码里使用过任何设计模式？</h5><p>设计模式是世界上各种各样程序员用来解决特定设计问题的尝试和测试的方法。设计模式是代码可用性的延伸。</p>
+</li>
+<li><h5 id="Java中什么叫单例设计模式？请用Java写出线程安全的单利模式。"><a href="#Java中什么叫单例设计模式？请用Java写出线程安全的单利模式。" class="headerlink" title="Java中什么叫单例设计模式？请用Java写出线程安全的单利模式。"></a>Java中什么叫单例设计模式？请用Java写出线程安全的单利模式。</h5><p>单例模式重点在于整个系统上共享一些创建时较耗资源的对象。整个应用只维护一个特定类实例，它被所有组件共同使用。Java.lang.Runtime是单例模式的经典例子。从Java5开始你可以使用枚举（enum）来实现线程安全的单例。</p>
+</li>
+<li><h5 id="在Java中，什么叫观察者设计模式（observer-design-pattern）？"><a href="#在Java中，什么叫观察者设计模式（observer-design-pattern）？" class="headerlink" title="在Java中，什么叫观察者设计模式（observer design pattern）？"></a>在Java中，什么叫观察者设计模式（observer design pattern）？</h5><p>观察者模式是基于对象的状态变化和观察者的通讯，以便他们作出相应的操作。简单的例子就是一个天气系统，当天气变化时必须在展示给公众的视图中进行反映。这个视图对象是一个主体，而不同的视图是观察者。</p>
+</li>
+<li><h5 id="使用工厂模式最主要的好处是什么？在哪里使用？"><a href="#使用工厂模式最主要的好处是什么？在哪里使用？" class="headerlink" title="使用工厂模式最主要的好处是什么？在哪里使用？"></a>使用工厂模式最主要的好处是什么？在哪里使用？</h5><p>工厂模式的最大好处是增加了创建对象时的封装层次。如果你使用工厂来创建对象，之后你可以使用更高性能的实现来替换原始的产品实现或类，这不需要在调用层做任何修改。</p>
+</li>
+<li><h5 id="举一个Java实现的装饰者模式（decorator-design-pattern）？它是作用于对象层次还是类层次？"><a href="#举一个Java实现的装饰者模式（decorator-design-pattern）？它是作用于对象层次还是类层次？" class="headerlink" title="举一个Java实现的装饰者模式（decorator design pattern）？它是作用于对象层次还是类层次？"></a>举一个Java实现的装饰者模式（decorator design pattern）？它是作用于对象层次还是类层次？</h5><p>装饰模式加强了单个对象的能力。Java Io到处都使用了装饰者模式，典型例子就是Buffered系列例如BufferedReader和BufferedWrite，它们增强了Reader和Writer对象，以实现提升性能的Buffer层次的读取写入。</p>
+</li>
+<li><h5 id="在Java中，为什么不允许从静态方法中访问非静态变量？"><a href="#在Java中，为什么不允许从静态方法中访问非静态变量？" class="headerlink" title="在Java中，为什么不允许从静态方法中访问非静态变量？"></a>在Java中，为什么不允许从静态方法中访问非静态变量？</h5><p>Java中不能从静态上下文访问非静态数据只因为非静态变量是跟具体的对象实例关联的，而静态的却没有和任何实例关联。</p>
+</li>
+<li><h5 id="设计一个ATM机，请输出你的设计思路？"><a href="#设计一个ATM机，请输出你的设计思路？" class="headerlink" title="设计一个ATM机，请输出你的设计思路？"></a>设计一个ATM机，请输出你的设计思路？</h5><p>比如设计金融系统来说，必须知道它们应该在任何情况下都能够正常工作。不管是断电还是其他情况，ATM应该保持正确的状态（事务），想想加锁（locking）、事务（transaction）、错误条件（error condition）、边界条件（boundary condition）等等。尽管你不能想到具体的设计，但如果你可以指出非功能性要求，提出一些问题，想到关于边界条件，这些都会是很好的。</p>
+</li>
+<li><h5 id="在Java中，什么时候用重载，什么时候用重写？"><a href="#在Java中，什么时候用重载，什么时候用重写？" class="headerlink" title="在Java中，什么时候用重载，什么时候用重写？"></a>在Java中，什么时候用重载，什么时候用重写？</h5><p>如果你看到一个类的不同实现有着不同的方式来做同一件事，那么就应该用重写（overriding）,而重载（overloading）是用不同的输入做同一件事。在Java 中，重载的方法签名不同，而重写并不是。</p>
+</li>
+<li><h5 id="举例说明什么情况下会更倾向于使用抽象类而不是接口？"><a href="#举例说明什么情况下会更倾向于使用抽象类而不是接口？" class="headerlink" title="举例说明什么情况下会更倾向于使用抽象类而不是接口？"></a>举例说明什么情况下会更倾向于使用抽象类而不是接口？</h5><p>接口和抽象类都遵循“面向接口而不是实现编码”设计原则，它可以增加代码的灵活性，可以适应不断变化的需求。下面有几个点可以帮助你回答这个问题：</p>
+<p>在Java中华，你只能继承一个类，单可以实现多个接口。所以一旦你继承了一个类，你就失去了继承其他类的机会了。</p>
+<p>接口通常被用来表示附属描述或行为如：Runnable、Clonable、Serializable等等，因为当你使用抽象类来表示行为时，你的类就不能同时是Runnable和Clonable（注：这里的意思是指如果把Runnable等实现为抽象类的情况），因为在Java中你不能继续继承两个 类，但当你使用接口时，你的类就可以同时拥有多个不同的行为。在一些对时间要求比较高的应用中，倾向于使用抽象类，它会比接口口稍快一点。如果希望把一系列行为都规范在类继承层次内，并且可以更好地在同一个地方进行编码，那么抽象类是一个更好地选择。有时，接口和抽象类可以一起使用，接口中定义函数，而在抽象类中定义默认的实现。</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Interview</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Mybatis相关</title>
+    <url>/2020/01/03/Mybatis%E7%9B%B8%E5%85%B3.html</url>
+    <content><![CDATA[<ol>
+<li><h5 id="什么是MyBatis？"><a href="#什么是MyBatis？" class="headerlink" title="什么是MyBatis？"></a>什么是MyBatis？</h5><p>MyBatis是一个可以自定义SQL、存储过程和高级映射的持久层框架。</p>
+</li>
+<li><h5 id="讲下MyBatis的缓存"><a href="#讲下MyBatis的缓存" class="headerlink" title="讲下MyBatis的缓存"></a>讲下MyBatis的缓存</h5><p>MyBatis的缓存分为一级缓存和二级缓存,一级缓存放在session里面,默认就有,二级缓存放在它的命名空间里,默认是不打开的,使用二级缓存属性类需要实现Serializable序列化接口(可用来保存对象的状态),可在它的映射文件中配置<cache></cache></p>
+</li>
+<li><h5 id="Mybatis是如何进行分页的？分页插件的原理是什么？"><a href="#Mybatis是如何进行分页的？分页插件的原理是什么？" class="headerlink" title="Mybatis是如何进行分页的？分页插件的原理是什么？"></a>Mybatis是如何进行分页的？分页插件的原理是什么？</h5><ol>
+<li><p>Mybatis使用RowBounds对象进行分页，也可以直接编写sql实现分页，也可以使用Mybatis的分页插件。</p>
+</li>
+<li><p>分页插件的原理：实现Mybatis提供的接口，实现自定义插件，在插件的拦截方法内拦截待执行的sql，然后重写sql。</p>
+<p>举例：select <em> from student，拦截sql后重写为：select t.</em> from （select * from student）t limit 0，10</p>
+</li>
+</ol>
+</li>
+<li><h5 id="简述Mybatis的插件运行原理，以及如何编写一个插件？"><a href="#简述Mybatis的插件运行原理，以及如何编写一个插件？" class="headerlink" title="简述Mybatis的插件运行原理，以及如何编写一个插件？"></a>简述Mybatis的插件运行原理，以及如何编写一个插件？</h5><ol>
+<li>Mybatis仅可以编写针对ParameterHandler、ResultSetHandler、StatementHandler、Executor这4种接口的插件，Mybatis通过动态代理，为需要拦截的接口生成代理对象以实现接口方法拦截功能，每当执行这4种接口对象的方法时，就会进入拦截方法，具体就是InvocationHandler的invoke()方法，当然，只会拦截那些你指定需要拦截的方法。</li>
+<li>实现Mybatis的Interceptor接口并复写intercept()方法，然后在给插件编写注解，指定要拦截哪一个接口的哪些方法即可，记住，别忘了在配置文件中配置你编写的插件。</li>
+</ol>
+</li>
+<li><h5 id="Mybatis动态sql是做什么的？都有哪些动态sql？能简述一下动态sql的执行原理不？"><a href="#Mybatis动态sql是做什么的？都有哪些动态sql？能简述一下动态sql的执行原理不？" class="headerlink" title="Mybatis动态sql是做什么的？都有哪些动态sql？能简述一下动态sql的执行原理不？"></a>Mybatis动态sql是做什么的？都有哪些动态sql？能简述一下动态sql的执行原理不？</h5><ol>
+<li><p>Mybatis动态sql可以让我们在Xml映射文件内，以标签的形式编写动态sql，完成逻辑判断和动态拼接sql的功能。</p>
+</li>
+<li><p>Mybatis提供了9种动态sql标签：trim|where|set|foreach|if|choose|when|otherwise|bind。</p>
+</li>
+<li><p>其执行原理为，使用OGNL从sql参数对象中计算表达式的值，根据表达式的值动态拼接sql，以此来完成动态sql的功能。</p>
+</li>
+</ol>
+</li>
+<li><h5 id="和-的区别是什么？"><a href="#和-的区别是什么？" class="headerlink" title="#{}和${}的区别是什么？"></a>#{}和${}的区别是什么？</h5><ol>
+<li><p>#{}是预编译处理，${}是字符串替换。</p>
+</li>
+<li><p>Mybatis在处理#{}时，会将sql中的#{}替换为?号，调用PreparedStatement的set方法来赋值；</p>
+</li>
+<li><p>Mybatis在处理${}时，就是把${}替换成变量的值。</p>
+</li>
+<li><p>使用#{}可以有效的防止SQL注入，提高系统安全性。</p>
+</li>
+</ol>
+</li>
+<li><h5 id="为什么说Mybatis是半自动ORM映射工具？它与全自动的区别在哪里？"><a href="#为什么说Mybatis是半自动ORM映射工具？它与全自动的区别在哪里？" class="headerlink" title="为什么说Mybatis是半自动ORM映射工具？它与全自动的区别在哪里？"></a>为什么说Mybatis是半自动ORM映射工具？它与全自动的区别在哪里？</h5><p>Hibernate属于全自动ORM映射工具，使用Hibernate查询关联对象或者关联集合对象时，可以根据对象关系模型直接获取，所以它是全自动的。而Mybatis在查询关联对象或关联集合对象时，需要手动编写sql来完成，所以，称之为半自动ORM映射工具。</p>
+</li>
+<li><h5 id="Mybatis是否支持延迟加载？如果支持，它的实现原理是什么？"><a href="#Mybatis是否支持延迟加载？如果支持，它的实现原理是什么？" class="headerlink" title="Mybatis是否支持延迟加载？如果支持，它的实现原理是什么？"></a>Mybatis是否支持延迟加载？如果支持，它的实现原理是什么？</h5><ol>
+<li><p>Mybatis仅支持association关联对象和collection关联集合对象的延迟加载，association指的就是一对一，collection指的就是一对多查询。在Mybatis配置文件中，可以配置是否启用延迟加载lazyLoadingEnabled=true|false。</p>
+</li>
+<li><p>它的原理是，使用CGLIB创建目标对象的代理对象，当调用目标方法时，进入拦截器方法，比如调用a.getB().getName()，拦截器invoke()方法发现a.getB()是null值，那么就会单独发送事先保存好的查询关联B对象的sql，把B查询上来，然后调用a.setB(b)，于是a的对象b属性就有值了，接着完成a.getB().getName()方法的调用。这就是延迟加载的基本原理。</p>
+</li>
+</ol>
+</li>
+<li><h5 id="MyBatis与Hibernate有哪些不同？"><a href="#MyBatis与Hibernate有哪些不同？" class="headerlink" title="MyBatis与Hibernate有哪些不同？"></a>MyBatis与Hibernate有哪些不同？</h5><ol>
+<li><p>Mybatis和hibernate不同，它不完全是一个ORM框架，因为MyBatis需要程序员自己编写Sql语句，不过mybatis可以通过XML或注解方式灵活配置要运行的sql语句，并将java对象和sql语句映射生成最终执行的sql，最后将sql执行的结果再映射生成java对象。</p>
+</li>
+<li><p>Mybatis学习门槛低，简单易学，程序员直接编写原生态sql，可严格控制sql执行性能，灵活度高，非常适合对关系数据模型要求不高的软件开发，例如互联网软件、企业运营类软件等，因为这类软件需求变化频繁，一但需求变化要求成果输出迅速。但是灵活的前提是mybatis无法做到数据库无关性，如果需要实现支持多种数据库的软件则需要自定义多套sql映射文件，工作量大。</p>
+</li>
+<li><p>Hibernate对象/关系映射能力强，数据库无关性好，对于关系模型要求高的软件（例如需求固定的定制化软件）如果用hibernate开发可以节省很多代码，提高效率。但是Hibernate的缺点是学习门槛高，要精通门槛更高，而且怎么设计O/R映射，在性能和对象模型之间如何权衡，以及怎样用好Hibernate需要具有很强的经验和能力才行。</p>
+</li>
+</ol>
+<p>总之，按照用户的需求在有限的资源环境下只要能做出维护性、扩展性良好的软件架构都是好架构，所以框架只有适合才是最好。</p>
+</li>
+<li><h5 id="MyBatis的好处是什么？"><a href="#MyBatis的好处是什么？" class="headerlink" title="MyBatis的好处是什么？"></a>MyBatis的好处是什么？</h5><ol>
+<li><p>MyBatis把sql语句从Java源程序中独立出来，放在单独的XML文件中编写，给程序的维护带来了很大便利。</p>
+</li>
+<li><p>MyBatis封装了底层JDBC API的调用细节，并能自动将结果集转换成Java Bean对象，大大简化了Java数据库编程的重复工作。</p>
+</li>
+<li><p>因为MyBatis需要程序员自己去编写sql语句，程序员可以结合数据库自身的特点灵活控制sql语句，因此能够实现比Hibernate等全自动orm框架更高的查询效率，能够完成复杂查询。</p>
+</li>
+</ol>
+</li>
+<li><h5 id="简述Mybatis的Xml映射文件和Mybatis内部数据结构之间的映射关系？"><a href="#简述Mybatis的Xml映射文件和Mybatis内部数据结构之间的映射关系？" class="headerlink" title="简述Mybatis的Xml映射文件和Mybatis内部数据结构之间的映射关系？"></a>简述Mybatis的Xml映射文件和Mybatis内部数据结构之间的映射关系？</h5><p>Mybatis将所有Xml配置信息都封装到All-In-One重量级对象Configuration内部。在Xml映射文件中，<parametermap>标签会被解析为ParameterMap对象，其每个子元素会被解析为ParameterMapping对象。<resultmap>标签会被解析为ResultMap对象，其每个子元素会被解析为ResultMapping对象。每一个<select>、<insert>、<update>、<delete>标签均会被解析为MappedStatement对象，标签内的sql会被解析为BoundSql对象。</delete></update></insert></select></resultmap></parametermap></p>
+</li>
+<li><h5 id="什么是MyBatis的接口绑定-有什么好处？"><a href="#什么是MyBatis的接口绑定-有什么好处？" class="headerlink" title="什么是MyBatis的接口绑定,有什么好处？"></a>什么是MyBatis的接口绑定,有什么好处？</h5><p>接口映射就是在MyBatis中任意定义接口,然后把接口里面的方法和SQL语句绑定,我们直接调用接口方法就可以,这样比起原来了SqlSession提供的方法我们可以有更加灵活的选择和设置.</p>
+</li>
+<li><h5 id="接口绑定有几种实现方式-分别是怎么实现的"><a href="#接口绑定有几种实现方式-分别是怎么实现的" class="headerlink" title="接口绑定有几种实现方式,分别是怎么实现的?"></a>接口绑定有几种实现方式,分别是怎么实现的?</h5><p>接口绑定有两种实现方式,一种是通过注解绑定,就是在接口的方法上面加上@Select@Update等注解里面包含Sql语句来绑定,另外一种就是通过xml里面写SQL来绑定,在这种情况下,要指定xml映射文件里面的namespace必须为接口的全路径名.</p>
+</li>
+<li><h5 id="什么情况下用注解绑定-什么情况下用xml绑定？"><a href="#什么情况下用注解绑定-什么情况下用xml绑定？" class="headerlink" title="什么情况下用注解绑定,什么情况下用xml绑定？"></a>什么情况下用注解绑定,什么情况下用xml绑定？</h5><p>当Sql语句比较简单时候,用注解绑定；当SQL语句比较复杂时候,用xml绑定,一般用xml绑定的比较多</p>
+</li>
+<li><h5 id="MyBatis实现一对一有几种方式-具体怎么操作的？"><a href="#MyBatis实现一对一有几种方式-具体怎么操作的？" class="headerlink" title="MyBatis实现一对一有几种方式?具体怎么操作的？"></a>MyBatis实现一对一有几种方式?具体怎么操作的？</h5><p>有联合查询和嵌套查询,联合查询是几个表联合查询,只查询一次,通过在resultMap里面配置association节点配置一对一的类就可以完成;嵌套查询是先查一个表,根据这个表里面的结果的外键id,去再另外一个表里面查询数据,也是通过association配置,但另外一个表的查询通过select属性配置。</p>
+</li>
+<li><h5 id="Mybatis能执行一对一、一对多的关联查询吗？都有哪些实现方式，以及它们之间的区别？"><a href="#Mybatis能执行一对一、一对多的关联查询吗？都有哪些实现方式，以及它们之间的区别？" class="headerlink" title="Mybatis能执行一对一、一对多的关联查询吗？都有哪些实现方式，以及它们之间的区别？"></a>Mybatis能执行一对一、一对多的关联查询吗？都有哪些实现方式，以及它们之间的区别？</h5><p>能，Mybatis不仅可以执行一对一、一对多的关联查询，还可以执行多对一，多对多的关联查询，多对一查询，其实就是一对一查询，只需要把selectOne()修改为selectList()即可；多对多查询，其实就是一对多查询，只需要把selectOne()修改为selectList()即可。</p>
+<p>关联对象查询，有两种实现方式，一种是单独发送一个sql去查询关联对象，赋给主对象，然后返回主对象。另一种是使用嵌套查询，嵌套查询的含义为使用join查询，一部分列是A对象的属性值，另外一部分列是关联对象B的属性值，好处是只发一个sql查询，就可以把主对象和其关联对象查出来。</p>
+</li>
+<li><h5 id="MyBatis里面的动态Sql是怎么设定的-用什么语法"><a href="#MyBatis里面的动态Sql是怎么设定的-用什么语法" class="headerlink" title="MyBatis里面的动态Sql是怎么设定的?用什么语法?"></a>MyBatis里面的动态Sql是怎么设定的?用什么语法?</h5><p>MyBatis里面的动态Sql一般是通过if节点来实现,通过OGNL语法来实现,但是如果要写的完整,必须配合where,trim节点,where节点是判断包含节点有内容就插入where,否则不插入,trim节点是用来判断如果动态语句是以and 或or开始,那么会自动把这个and或者or取掉。</p>
+</li>
+<li><h5 id="Mybatis是如何将sql执行结果封装为目标对象并返回的？都有哪些映射形式？"><a href="#Mybatis是如何将sql执行结果封装为目标对象并返回的？都有哪些映射形式？" class="headerlink" title="Mybatis是如何将sql执行结果封装为目标对象并返回的？都有哪些映射形式？"></a>Mybatis是如何将sql执行结果封装为目标对象并返回的？都有哪些映射形式？</h5><p>第一种是使用<resultmap>标签，逐一定义列名和对象属性名之间的映射关系。</resultmap></p>
+<p>第二种是使用sql列的别名功能，将列别名书写为对象属性名，比如T_NAME AS NAME，对象属性名一般是name，小写，但是列名不区分大小写，Mybatis会忽略列名大小写，智能找到与之对应对象属性名，你甚至可以写成T_NAME AS NaMe，Mybatis一样可以正常工作。</p>
+<p>有了列名与属性名的映射关系后，Mybatis通过反射创建对象，同时使用反射给对象的属性逐一赋值并返回，那些找不到映射关系的属性，是无法完成赋值的。</p>
+</li>
+<li><h5 id="Xml映射文件中，除了常见的select-insert-updae-delete标签之外，还有哪些标签？"><a href="#Xml映射文件中，除了常见的select-insert-updae-delete标签之外，还有哪些标签？" class="headerlink" title="Xml映射文件中，除了常见的select|insert|updae|delete标签之外，还有哪些标签？"></a>Xml映射文件中，除了常见的select|insert|updae|delete标签之外，还有哪些标签？</h5><p>还有很多其他的标签，<resultmap>、<parametermap>、<sql>、<include>、<selectkey>，加上动态sql的9个标签，trim|where|set|foreach|if|choose|when|otherwise|bind等，其中<sql>为sql片段标签，通过<include>标签引入sql片段，<selectkey>为不支持自增的主键生成策略标签。</selectkey></include></sql></selectkey></include></sql></parametermap></resultmap></p>
+</li>
+<li><h5 id="当实体类中的属性名和表中的字段名不一样，如果将查询的结果封装到指定pojo？"><a href="#当实体类中的属性名和表中的字段名不一样，如果将查询的结果封装到指定pojo？" class="headerlink" title="当实体类中的属性名和表中的字段名不一样，如果将查询的结果封装到指定pojo？"></a>当实体类中的属性名和表中的字段名不一样，如果将查询的结果封装到指定pojo？</h5><ol>
+<li><p>通过在查询的sql语句中定义字段名的别名。</p>
+</li>
+<li><p>通过<resultmap>来映射字段名和实体类属性名的一一对应的关系。</resultmap></p>
+</li>
+</ol>
+</li>
+<li><h5 id="模糊查询like语句该怎么写"><a href="#模糊查询like语句该怎么写" class="headerlink" title="模糊查询like语句该怎么写"></a>模糊查询like语句该怎么写</h5></li>
+<li><p>在java中拼接通配符，通过#{}赋值</p>
+</li>
+<li><p>在Sql语句中拼接通配符 （不安全 会引起Sql注入）</p>
+</li>
+<li><h5 id="通常一个Xml映射文件，都会写一个Dao接口与之对应-Dao的工作原理，是否可以重载？"><a href="#通常一个Xml映射文件，都会写一个Dao接口与之对应-Dao的工作原理，是否可以重载？" class="headerlink" title="通常一个Xml映射文件，都会写一个Dao接口与之对应, Dao的工作原理，是否可以重载？"></a>通常一个Xml映射文件，都会写一个Dao接口与之对应, Dao的工作原理，是否可以重载？</h5><p>不能重载，因为通过Dao寻找Xml对应的sql的时候全限名+方法名的保存和寻找策略。接口工作原理为jdk动态代理原理，运行时会为dao生成proxy，代理对象会拦截接口方法，去执行对应的sql返回数据。</p>
+</li>
+<li><h5 id="Mybatis映射文件中，如果A标签通过include引用了B标签的内容，请问，B标签能否定义在A标签的后面，还是说必须定义在A标签的前面？"><a href="#Mybatis映射文件中，如果A标签通过include引用了B标签的内容，请问，B标签能否定义在A标签的后面，还是说必须定义在A标签的前面？" class="headerlink" title="Mybatis映射文件中，如果A标签通过include引用了B标签的内容，请问，B标签能否定义在A标签的后面，还是说必须定义在A标签的前面？"></a>Mybatis映射文件中，如果A标签通过include引用了B标签的内容，请问，B标签能否定义在A标签的后面，还是说必须定义在A标签的前面？</h5><p>虽然Mybatis解析Xml映射文件是按照顺序解析的，但是，被引用的B标签依然可以定义在任何地方，Mybatis都可以正确识别。原理是，Mybatis解析A标签，发现A标签引用了B标签，但是B标签尚未解析到，尚不存在，此时，Mybatis会将A标签标记为未解析状态，然后继续解析余下的标签，包含B标签，待所有标签解析完毕，Mybatis会重新解析那些被标记为未解析的标签，此时再解析A标签时，B标签已经存在，A标签也就可以正常解析完成了。</p>
+</li>
+<li><h5 id="Mybatis的Xml映射文件中，不同的Xml映射文件，id是否可以重复？"><a href="#Mybatis的Xml映射文件中，不同的Xml映射文件，id是否可以重复？" class="headerlink" title="Mybatis的Xml映射文件中，不同的Xml映射文件，id是否可以重复？"></a>Mybatis的Xml映射文件中，不同的Xml映射文件，id是否可以重复？</h5><p>不同的Xml映射文件，如果配置了namespace，那么id可以重复；如果没有配置namespace，那么id不能重复；毕竟namespace不是必须的，只是最佳实践而已。原因就是namespace+id是作为Map&lt;String, MappedStatement&gt;的key使用的，如果没有namespace，就剩下id，那么，id重复会导致数据互相覆盖。有了namespace，自然id就可以重复，namespace不同，namespace+id自然也就不同。</p>
+</li>
+<li><h5 id="Mybatis中如何执行批处理？"><a href="#Mybatis中如何执行批处理？" class="headerlink" title="Mybatis中如何执行批处理？"></a>Mybatis中如何执行批处理？</h5><p>使用BatchExecutor完成批处理。</p>
+</li>
+<li><h5 id="Mybatis都有哪些Executor执行器？它们之间的区别是什么？"><a href="#Mybatis都有哪些Executor执行器？它们之间的区别是什么？" class="headerlink" title="Mybatis都有哪些Executor执行器？它们之间的区别是什么？"></a>Mybatis都有哪些Executor执行器？它们之间的区别是什么？</h5><p>Mybatis有三种基本的Executor执行器，SimpleExecutor、ReuseExecutor、BatchExecutor。1）SimpleExecutor：每执行一次update或select，就开启一个Statement对象，用完立刻关闭Statement对象。2）ReuseExecutor：执行update或select，以sql作为key查找Statement对象，存在就使用，不存在就创建，用完后，不关闭Statement对象，而是放置于Map3）BatchExecutor：完成批处理。</p>
+</li>
+<li><h5 id="Mybatis中如何指定使用哪一种Executor执行器？"><a href="#Mybatis中如何指定使用哪一种Executor执行器？" class="headerlink" title="Mybatis中如何指定使用哪一种Executor执行器？"></a>Mybatis中如何指定使用哪一种Executor执行器？</h5><p>在Mybatis配置文件中，可以指定默认的ExecutorType执行器类型，也可以手动给DefaultSqlSessionFactory的创建SqlSession的方法传递ExecutorType类型参数。</p>
+</li>
+<li><h5 id="Mybatis执行批量插入，能返回数据库主键列表吗？"><a href="#Mybatis执行批量插入，能返回数据库主键列表吗？" class="headerlink" title="Mybatis执行批量插入，能返回数据库主键列表吗？"></a>Mybatis执行批量插入，能返回数据库主键列表吗？</h5><p>能，JDBC都能，Mybatis当然也能。</p>
+</li>
+<li><h5 id="Mybatis是否可以映射Enum枚举类？"><a href="#Mybatis是否可以映射Enum枚举类？" class="headerlink" title="Mybatis是否可以映射Enum枚举类？"></a>Mybatis是否可以映射Enum枚举类？</h5><p>Mybatis可以映射枚举类，不单可以映射枚举类，Mybatis可以映射任何对象到表的一列上。映射方式为自定义一个TypeHandler，实现TypeHandler的setParameter()和getResult()接口方法。TypeHandler有两个作用，一是完成从javaType至jdbcType的转换，二是完成jdbcType至javaType的转换，体现为setParameter()和getResult()两个方法，分别代表设置sql问号占位符参数和获取列查询结果。</p>
+</li>
+<li><h5 id="如何获取自动生成的-主-键值？"><a href="#如何获取自动生成的-主-键值？" class="headerlink" title="如何获取自动生成的(主)键值？"></a>如何获取自动生成的(主)键值？</h5><p>配置文件设置usegeneratedkeys 为true</p>
+</li>
+<li><h5 id="在mapper中如何传递多个参数？"><a href="#在mapper中如何传递多个参数？" class="headerlink" title="在mapper中如何传递多个参数？"></a>在mapper中如何传递多个参数？</h5></li>
+<li><p>直接在方法中传递参数，xml文件用#{0} #{1}来获取</p>
+</li>
+<li><p>使用 @param 注解:这样可以直接在xml文件中通过#{name}来获取</p>
+</li>
+<li><h5 id="resultType-resultMap的区别？"><a href="#resultType-resultMap的区别？" class="headerlink" title="resultType resultMap的区别？"></a>resultType resultMap的区别？</h5></li>
+<li><p>类的名字和数据库相同时，可以直接设置resultType参数为Pojo类</p>
+</li>
+<li><p>若不同，需要设置resultMap 将结果名字和Pojo名字进行转换</p>
+</li>
+<li><h5 id="使用MyBatis的mapper接口调用时有哪些要求？"><a href="#使用MyBatis的mapper接口调用时有哪些要求？" class="headerlink" title="使用MyBatis的mapper接口调用时有哪些要求？"></a>使用MyBatis的mapper接口调用时有哪些要求？</h5></li>
+<li><p>Mapper接口方法名和mapper.xml中定义的每个sql的id相同</p>
+</li>
+<li><p>Mapper接口方法的输入参数类型和mapper.xml中定义的每个sql 的parameterType的类型相同</p>
+</li>
+<li><p>Mapper接口方法的输出参数类型和mapper.xml中定义的每个sql的resultType的类型相同4</p>
+</li>
+<li><p>Mapper.xml文件中的namespace即是mapper接口的类路径。</p>
+</li>
+<li><h5 id="Mybatis比IBatis比较大的几个改进是什么？"><a href="#Mybatis比IBatis比较大的几个改进是什么？" class="headerlink" title="Mybatis比IBatis比较大的几个改进是什么？"></a>Mybatis比IBatis比较大的几个改进是什么？</h5></li>
+<li><p>有接口绑定,包括注解绑定sql和xml绑定Sql </p>
+</li>
+<li><p>动态sql由原来的节点配置变成OGNL表达式3） 在一对一,一对多的时候引进了association,在一对多的时候引入了collection节点,不过都是在resultMap里面配置</p>
+</li>
+<li><h5 id="IBatis和MyBatis在核心处理类分别叫什么？"><a href="#IBatis和MyBatis在核心处理类分别叫什么？" class="headerlink" title="IBatis和MyBatis在核心处理类分别叫什么？"></a>IBatis和MyBatis在核心处理类分别叫什么？</h5><p>IBatis里面的核心处理类交SqlMapClient,MyBatis里面的核心处理类叫做SqlSession。</p>
+</li>
+<li><h5 id="IBatis和MyBatis在细节上的不同有哪些？"><a href="#IBatis和MyBatis在细节上的不同有哪些？" class="headerlink" title="IBatis和MyBatis在细节上的不同有哪些？"></a>IBatis和MyBatis在细节上的不同有哪些？</h5></li>
+<li><p>在sql里面变量命名有原来的#变量# 变成了#{变量}</p>
+</li>
+<li><p>原来的$变量$变成了${变量}</p>
+</li>
+<li><p>原来在sql节点里面的class都换名字交type</p>
+</li>
+<li><p>原来的queryForObject queryForList 变成了selectOne selectList5）原来的别名设置在映射文件里面放在了核心配置文件里</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Interview</category>
+      </categories>
   </entry>
   <entry>
     <title>Centos7下Nexus3的安装和配置</title>
