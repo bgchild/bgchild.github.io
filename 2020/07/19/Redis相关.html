@@ -164,13 +164,14 @@
 
 
   <meta name="description" content="redis和memcached什么区别？为什么高并发下有时单线程的redis比多线程的memcached效率要高？区别：  mc可缓存图片和视频。rd支持除k/v更多的数据结构； rd可以使用虚拟内存，rd可持久化和aof灾难恢复，rd通过主从支持数据备份； rd可以做消息队列  原因：mc多线程模型引入了缓存一致性和锁，加锁带来了性能损耗。  redis主从复制如何实现的？redis的集群模式">
+<meta name="keywords" content="Interview">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Redis相关">
 <meta property="og:url" content="https://bgchild.github.io/2020/07/19/Redis相关.html">
 <meta property="og:site_name" content="aBigChild">
 <meta property="og:description" content="redis和memcached什么区别？为什么高并发下有时单线程的redis比多线程的memcached效率要高？区别：  mc可缓存图片和视频。rd支持除k/v更多的数据结构； rd可以使用虚拟内存，rd可持久化和aof灾难恢复，rd通过主从支持数据备份； rd可以做消息队列  原因：mc多线程模型引入了缓存一致性和锁，加锁带来了性能损耗。  redis主从复制如何实现的？redis的集群模式">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2020-07-20T15:21:21.416Z">
+<meta property="og:updated_time" content="2020-07-30T02:49:57.158Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Redis相关">
 <meta name="twitter:description" content="redis和memcached什么区别？为什么高并发下有时单线程的redis比多线程的memcached效率要高？区别：  mc可缓存图片和视频。rd支持除k/v更多的数据结构； rd可以使用虚拟内存，rd可持久化和aof灾难恢复，rd通过主从支持数据备份； rd可以做消息队列  原因：mc多线程模型引入了缓存一致性和锁，加锁带来了性能损耗。  redis主从复制如何实现的？redis的集群模式">
@@ -513,7 +514,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2020-07-20 23:21:21" itemprop="dateModified" datetime="2020-07-20T23:21:21+08:00">2020-07-20</time>
+                <time title="修改时间：2020-07-30 10:49:57" itemprop="dateModified" datetime="2020-07-30T10:49:57+08:00">2020-07-30</time>
               
             
           </span>
@@ -740,6 +741,12 @@ d) 线程模型，memcache使用多线程，主线程监听，worker子线程接
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/Interview/" rel="tag"><i class="fa fa-tag"></i>Interview</a>
+          
+        </div>
+      
 
       
       
@@ -748,6 +755,10 @@ d) 线程模型，memcache使用多线程，主线程监听，worker子线程接
       
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/07/21/SpringBoot相关.html" rel="prev" title="SpringBoot相关">
+                 <i class="fa fa-chevron-left"></i> SpringBoot相关
+              </a>
             
           </div>
 
@@ -831,7 +842,7 @@ d) 线程模型，memcache使用多线程，主线程监听，worker子线程接
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">24</span>
+                    <span class="site-state-item-count">29</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -856,7 +867,7 @@ d) 线程模型，memcache使用多线程，主线程监听，worker子线程接
                     
                       
                     
-                    <span class="site-state-item-count">5</span>
+                    <span class="site-state-item-count">6</span>
                     <span class="site-state-item-name">分类</span>
                   </a>
                 </div>
@@ -891,7 +902,9 @@ d) 线程模型，memcache使用多线程，主线程监听，worker子线程接
                     
                       
                     
-                    <span class="site-state-item-count">11</span>
+                      
+                    
+                    <span class="site-state-item-count">12</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
