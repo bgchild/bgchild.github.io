@@ -163,17 +163,18 @@
 
 
 
-  <meta name="description" content="人生如画，岁月如歌">
+  <meta name="description" content="慢sql查询优化  123456789101112#查看系统变量及其值SHOW VARIABLES like &amp;apos;%QUERY%&amp;apos;#查看各种状态SHOW STATUS LIKE &amp;apos;%Slow_queries%&amp;apos;#慢查询日志的位置set global slow_query_log_file=&amp;apos; /usr/share/mysql/sql_log/mys">
+<meta name="keywords" content="Mysql">
 <meta property="og:type" content="article">
-<meta property="og:title" content="docker-compose搭建redis哨兵集群">
-<meta property="og:url" content="https://bgchild.github.io/2020/07/22/docker-compose搭建redis哨兵集群.html">
+<meta property="og:title" content="慢sql查询优化">
+<meta property="og:url" content="https://bgchild.github.io/2020/01/03/慢sql查询.html">
 <meta property="og:site_name" content="aBigChild">
-<meta property="og:description" content="人生如画，岁月如歌">
+<meta property="og:description" content="慢sql查询优化  123456789101112#查看系统变量及其值SHOW VARIABLES like &amp;apos;%QUERY%&amp;apos;#查看各种状态SHOW STATUS LIKE &amp;apos;%Slow_queries%&amp;apos;#慢查询日志的位置set global slow_query_log_file=&amp;apos; /usr/share/mysql/sql_log/mys">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2020-07-22T05:17:27.676Z">
+<meta property="og:updated_time" content="2020-09-02T12:52:41.111Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="docker-compose搭建redis哨兵集群">
-<meta name="twitter:description" content="人生如画，岁月如歌">
+<meta name="twitter:title" content="慢sql查询优化">
+<meta name="twitter:description" content="慢sql查询优化  123456789101112#查看系统变量及其值SHOW VARIABLES like &amp;apos;%QUERY%&amp;apos;#查看各种状态SHOW STATUS LIKE &amp;apos;%Slow_queries%&amp;apos;#慢查询日志的位置set global slow_query_log_file=&amp;apos; /usr/share/mysql/sql_log/mys">
 
 
 
@@ -182,7 +183,7 @@
 
 
 
-  <link rel="canonical" href="https://bgchild.github.io/2020/07/22/docker-compose搭建redis哨兵集群.html">
+  <link rel="canonical" href="https://bgchild.github.io/2020/01/03/慢sql查询.html">
 
 
 
@@ -192,7 +193,7 @@
   };
 </script>
 
-  <title>docker-compose搭建redis哨兵集群 | aBigChild</title>
+  <title>慢sql查询优化 | aBigChild</title>
   
 
 
@@ -454,7 +455,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://bgchild.github.io/2020/07/22/docker-compose搭建redis哨兵集群.html">
+    <link itemprop="mainEntityOfPage" href="https://bgchild.github.io/2020/01/03/慢sql查询.html">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="laoK">
@@ -471,7 +472,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">docker-compose搭建redis哨兵集群
+          <h1 class="post-title" itemprop="name headline">慢sql查询优化
               
             
           </h1>
@@ -496,12 +497,24 @@
                 
               
 
-              <time title="创建时间：2020-07-22 13:10:10 / 修改时间：13:17:27" itemprop="dateCreated datePublished" datetime="2020-07-22T13:10:10+08:00">2020-07-22</time>
+              <time title="创建时间：2020-01-03 21:46:47" itemprop="dateCreated datePublished" datetime="2020-01-03T21:46:47+08:00">2020-01-03</time>
             
 
             
               
 
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-09-02 20:52:41" itemprop="dateModified" datetime="2020-09-02T20:52:41+08:00">2020-09-02</time>
               
             
           </span>
@@ -518,7 +531,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/docker/" itemprop="url" rel="index"><span itemprop="name">docker</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/db/" itemprop="url" rel="index"><span itemprop="name">db</span></a></span>
 
                 
                 
@@ -552,7 +565,15 @@
       
 
       
-        
+        <ol>
+<li>慢sql查询优化</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">#查看系统变量及其值</span><br><span class="line">SHOW VARIABLES like &apos;%QUERY%&apos;</span><br><span class="line">#查看各种状态</span><br><span class="line">SHOW STATUS LIKE &apos;%Slow_queries%&apos;</span><br><span class="line">#慢查询日志的位置</span><br><span class="line">set global slow_query_log_file=&apos; /usr/share/mysql/sql_log/mysql-slow.log&apos; </span><br><span class="line">#开启慢查询日志</span><br><span class="line">set global log_queries_not_using_indexes=on;</span><br><span class="line">#大于1秒钟的数据记录到慢日志中，如果设置为默认0，则会有大量的信息存储在磁盘中，磁盘很容易满掉</span><br><span class="line">set global long_query_time=1;  </span><br><span class="line">#指定索引</span><br><span class="line">FORCE INDEX()</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>数据库的隔离级别设置</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#查看全局隔离级别设置</span><br><span class="line">SELECT @@global.transaction_isolation;</span><br><span class="line">#查看当前事务隔离级别</span><br><span class="line">SELECT @@transaction_isolation;</span><br><span class="line">#设置隔离级别 (read uncommitted、read committed、repeatable read、serializable)</span><br><span class="line">set session transaction isolation level 设置事务隔离级别;</span><br></pre></td></tr></table></figure>
+
       
     </div>
     <div>
@@ -588,6 +609,12 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/Mysql/" rel="tag"><i class="fa fa-tag"></i>Mysql</a>
+          
+        </div>
+      
 
       
       
@@ -597,14 +624,18 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
+              <a href="/2020/01/03/Mysql数据库自动备份.html" rel="prev" title="MYSQL数据库自动备份">
+                 <i class="fa fa-chevron-left"></i> MYSQL数据库自动备份
+              </a>
+            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2020/07/17/Oracle纵表转换成横表.html" rel="next" title="Oracle纵表转换横表">
-                Oracle纵表转换横表 <i class="fa fa-chevron-right"></i>
+              <a href="/2020/01/03/Mysql创建函数.html" rel="next" title="Mysql创建函数">
+                Mysql创建函数 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -670,7 +701,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-count">21</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -691,9 +722,7 @@
                     
                       
                     
-                      
-                    
-                    <span class="site-state-item-count">5</span>
+                    <span class="site-state-item-count">4</span>
                     <span class="site-state-item-name">分类</span>
                   </a>
                 </div>
