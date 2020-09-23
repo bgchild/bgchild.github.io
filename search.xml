@@ -141,14 +141,14 @@
 </li>
 </ul>
 <h5 id="19-Collection和Collections有什么区别？"><a href="#19-Collection和Collections有什么区别？" class="headerlink" title="19.Collection和Collections有什么区别？"></a>19.Collection和Collections有什么区别？</h5><p>Collection是一个集合接口，它提供了对集合对象进行基本操作的通用接口方法，所有集合是它的子类，比如List、Set等。</p>
-<p>Collections是一个包装类，包换了很多静态方法，不能被实例化，就像一个工具类，比如提供的排序方法：Collections.sort(list)。</p>
+<p>Collections是一个包装类，包括了很多静态方法，不能被实例化，就像一个工具类，比如提供的排序方法：Collections.sort(list)。</p>
 <h5 id="20-List、Set、Map之间的区别是什么？"><a href="#20-List、Set、Map之间的区别是什么？" class="headerlink" title="20.List、Set、Map之间的区别是什么？"></a>20.List、Set、Map之间的区别是什么？</h5><p>List、Set、Map的区别主要体现在两个方面：元素是否有序、是否允许元素重复。</p>
 <p>三者之间的区别，如下表：</p>
 <p><img src="/images/Java%E6%9C%80%E5%B8%B8%E8%A7%81200%E9%9D%A2%E8%AF%95%E9%A2%98%E5%85%A8%E9%9D%A2%E8%A7%A3%E6%9E%90/61874ac0-3b36-11e9-a0f4-259d2e592847-1599580956261.jpg" alt="61874ac0-3b36-11e9-a0f4-259d2e592847"></p>
 <h5 id="21-HashMap和Hashtable有什么区别？"><a href="#21-HashMap和Hashtable有什么区别？" class="headerlink" title="21.HashMap和Hashtable有什么区别？"></a>21.HashMap和Hashtable有什么区别？</h5><p>存储：HashMap运行key和value为null，而Hashtable不允许。</p>
 <p>线程安全：Hashtable是线程安全的，而HashMap是非线程安全的。</p>
 <p>推荐使用：在Hashtable的类注释可以看到，Hashtable是保留类不建议使用，推荐在单线程环境下使用HashMap替代，如果需要多线程使用则用ConcurrentHashMap替代。</p>
-<h5 id="22-如何解决使用HashMap还是TreeMap？"><a href="#22-如何解决使用HashMap还是TreeMap？" class="headerlink" title="22.如何解决使用HashMap还是TreeMap？"></a>22.如何解决使用HashMap还是TreeMap？</h5><p>对于在Map中插入，删除、定位一个元素这类操作，HashMap是最好的选择，因为相对而言HashMap的插入会更快，但若果你要对一个key集合有序的遍历，那TreeMap是更好的选择。</p>
+<h5 id="22-如何选择使用HashMap还是TreeMap？"><a href="#22-如何选择使用HashMap还是TreeMap？" class="headerlink" title="22.如何选择使用HashMap还是TreeMap？"></a>22.如何选择使用HashMap还是TreeMap？</h5><p>对于在Map中插入，删除、定位一个元素这类操作，HashMap是最好的选择，因为相对而言HashMap的插入会更快，但如果你要对一个key集合有序的遍历，那TreeMap是更好的选择。</p>
 <h5 id="23-说一下HashMap的实现原理？"><a href="#23-说一下HashMap的实现原理？" class="headerlink" title="23.说一下HashMap的实现原理？"></a>23.说一下HashMap的实现原理？</h5><p>HashMap基于Hash算法实现的，我们通过put(key,value)存储，get(key)来获取。当传入key时，HashMap会根据key.hashCode()计算出hash值，根据hash值将value保存在bucket里。当计算出的hash值相同时，我们称之为hash冲突，hashMap的做法是用链表和红黑树存储相同hash值的value。当hash冲突的个数比较少时，使用链表否则使用红黑树。</p>
 <h5 id="24-说一下HashSet的实现原理？"><a href="#24-说一下HashSet的实现原理？" class="headerlink" title="24.说一下HashSet的实现原理？"></a>24.说一下HashSet的实现原理？</h5><p>HashSet是基本HashMap实现的，HashSet底层使用HashMap来保存所有元素，因此HashSet的实现比较简单，相关HashSet的操作，基本上都是调用底层HashMap的相关方法来完成，HashSet不允许重复的值。</p>
 <h5 id="25-ArrayList和LinkedList的区别是什么？"><a href="#25-ArrayList和LinkedList的区别是什么？" class="headerlink" title="25.ArrayList和LinkedList的区别是什么？"></a>25.ArrayList和LinkedList的区别是什么？</h5><ul>
@@ -211,7 +211,7 @@
 <li>RUNNABLE正在执行中</li>
 <li>BLOCKED阻塞的（被同步锁或者IO锁阻塞）</li>
 <li>WAITING永久等待状态</li>
-<li>TIMED_WAOTING等待指定的时间重新被唤醒的状态</li>
+<li>TIMED_WATING等待指定的时间重新被唤醒的状态</li>
 <li>TERMINATED执行完成</li>
 </ul>
 <h5 id="41-sleep-和wait-有什么区别？"><a href="#41-sleep-和wait-有什么区别？" class="headerlink" title="41.sleep()和wait()有什么区别？"></a>41.sleep()和wait()有什么区别？</h5><ul>
@@ -311,7 +311,7 @@
 <li>page：JSP页面本身（相当于java中的this）；</li>
 <li>exception：封装页面抛出异常的对象。</li>
 </ul>
-<h5 id="66-说一下JSP的4中作用域？"><a href="#66-说一下JSP的4中作用域？" class="headerlink" title="66.说一下JSP的4中作用域？"></a>66.说一下JSP的4中作用域？</h5><ul>
+<h5 id="66-说一下JSP的4种作用域？"><a href="#66-说一下JSP的4种作用域？" class="headerlink" title="66.说一下JSP的4种作用域？"></a>66.说一下JSP的4种作用域？</h5><ul>
 <li>page：代表与一个页面相关的对象和属性。</li>
 <li>request：代表与客户端发出的一个请求相关的对象和属性。一个请求可能跨越多个页面，设计多个web组件；需要在页面显示的临时数据可以置于此作用域。</li>
 <li>session：代表某个用户与服务器建立的一次会话相关的对象和属性。跟某个用户相关的数据应该放在用户自己的session中。</li>
@@ -323,7 +323,7 @@
 <li>容量和个数限制：cookie有容量限制，每个站点下的cookie也有个数限制。</li>
 <li>存储的多样性：session可以存储在Redis中、数据库中、应用程序中；而cookie只能存储在浏览器中。</li>
 </ul>
-<h5 id="68-说一下session的工作原理？"><a href="#68-说一下session的工作原理？" class="headerlink" title="68.说一下session的工作原理？"></a>68.说一下session的工作原理？</h5><p>session的工作原理是客户端登录完成之后，服务器会创建对应的session，session创建完之后，会把session的id发送给客户端，客户端再存储到浏览器中。这样客户端每次访问服务器时，都会带着sessionid，服务器拿到sessionid之后，在内存找到与只对应的session这样就可以正常工作了。</p>
+<h5 id="68-说一下session的工作原理？"><a href="#68-说一下session的工作原理？" class="headerlink" title="68.说一下session的工作原理？"></a>68.说一下session的工作原理？</h5><p>session的工作原理是客户端登录完成之后，服务器会创建对应的session，session创建完之后，会把session的id发送给客户端，客户端再存储到浏览器中。这样客户端每次访问服务器时，都会带着sessionid，服务器拿到sessionid之后，在内存找到与之对应的session这样就可以正常工作了。</p>
 <h5 id="69-如果客户端禁止cookie能实现session还能用吗？"><a href="#69-如果客户端禁止cookie能实现session还能用吗？" class="headerlink" title="69.如果客户端禁止cookie能实现session还能用吗？"></a>69.如果客户端禁止cookie能实现session还能用吗？</h5><p>可以用，session只是依赖cookie存储session，如果cookie被禁止用了，可以使用url中添加sessionid的方式保证session能正常使用。</p>
 <h5 id="70-spring-mvc和struts的区别是什么？"><a href="#70-spring-mvc和struts的区别是什么？" class="headerlink" title="70.spring mvc和struts的区别是什么？"></a>70.spring mvc和struts的区别是什么？</h5><ul>
 <li>拦截级别：struts2是类级别的拦截；spring mvc是方法级别的拦截。</li>
@@ -507,7 +507,7 @@
 <li>配置简单</li>
 <li>独立运行</li>
 <li>自动装配</li>
-<li>无代码生产和xml胚子</li>
+<li>无代码生产和xml配置</li>
 <li>提供应用监控</li>
 <li>易上手</li>
 <li>提升开发效率</li>
@@ -679,7 +679,7 @@
 </ul>
 <h5 id="147-RabbitMQ节点的类型有哪些？"><a href="#147-RabbitMQ节点的类型有哪些？" class="headerlink" title="147.RabbitMQ节点的类型有哪些？"></a>147.RabbitMQ节点的类型有哪些？</h5><ul>
 <li>磁盘节点：消息会存储到磁盘。</li>
-<li>内存节点：消息都存储在内存中，重启服务器消息丢失，心梗高于磁盘类型。</li>
+<li>内存节点：消息都存储在内存中，重启服务器消息丢失，性能高于磁盘类型。</li>
 </ul>
 <h5 id="148-RabbitMQ集群搭建要注意哪些问题？"><a href="#148-RabbitMQ集群搭建要注意哪些问题？" class="headerlink" title="148.RabbitMQ集群搭建要注意哪些问题？"></a>148.RabbitMQ集群搭建要注意哪些问题？</h5><ul>
 <li>各个节点之间使用“-link”连接，此属性不能忽略。</li>
@@ -761,7 +761,7 @@
 </li>
 </ul>
 <h5 id="170-Mysql的内连接、左连接、右连接有什么区别？"><a href="#170-Mysql的内连接、左连接、右连接有什么区别？" class="headerlink" title="170.Mysql的内连接、左连接、右连接有什么区别？"></a>170.Mysql的内连接、左连接、右连接有什么区别？</h5><p>内连接关键字：inner join;左连接：left join; 右连接：right join。</p>
-<p>内连接是把匹配的关联数据显示出来；左连接是左边的表全部显示出来，右边的表显示出渡河条件的数据，右连接正好相反。</p>
+<p>内连接是把匹配的关联数据显示出来；左连接是左边的表全部显示出来，右边的表显示出符合条件的数据，右连接正好相反。</p>
 <h5 id="171-MySQL索引是怎么实现的？"><a href="#171-MySQL索引是怎么实现的？" class="headerlink" title="171.MySQL索引是怎么实现的？"></a>171.MySQL索引是怎么实现的？</h5><p>索引是满足某种特定查找算法的数据结构，而这些数数据结构会以某种方式指向数据，从而实现高效的查询。</p>
 <p>具体来说MySQL中的索引，不同的数据引擎实现有所不同，但目前主流的数据库引擎的索引都是B+树实现的，B+树的搜索效率，可以到达二分法的性能，找到数据区域之后就找到了完整的数据结构了，所有索引的性能也是更好的。</p>
 <h5 id="172-怎么验证MySQL的索引是否满足需求？"><a href="#172-怎么验证MySQL的索引是否满足需求？" class="headerlink" title="172.怎么验证MySQL的索引是否满足需求？"></a>172.怎么验证MySQL的索引是否满足需求？</h5><p>使用explain语法：explain select * from table where type=1。</p>
@@ -866,7 +866,7 @@
 </ul>
 <h5 id="195-说一下JVM运行时数据区？"><a href="#195-说一下JVM运行时数据区？" class="headerlink" title="195.说一下JVM运行时数据区？"></a>195.说一下JVM运行时数据区？</h5><p>不同虚拟机的运行时数据区可能略微有所不同，但都会遵从Java虚拟机规范，Java虚拟机规范规定的区域分为以下五个部分：</p>
 <ul>
-<li>程序计数器（Program Counter Register）：当前线程执行的字节码的行号指示器，字节码解析器的工作通过改变这个计数器的值，来选取吓一跳需要执行的字节码指令，分支、循环、跳转、异常处理、线程恢复等基础功能、都需要依赖这个计数器来完成;</li>
+<li>程序计数器（Program Counter Register）：当前线程执行的字节码的行号指示器，字节码解析器的工作通过改变这个计数器的值，来选取下一条需要执行的字节码指令，分支、循环、跳转、异常处理、线程恢复等基础功能、都需要依赖这个计数器来完成;</li>
 <li>JAVA虚拟机栈（Java Virtual Machine Stacks）：用于存储局部变量表、操作数栈、动态链接、方法出口等信息。</li>
 <li>本地方法栈（Native Methd Stack）：与虚拟机栈的作用是一样的，只不过虚拟机栈是服务Java方法的，而本地方法栈是为虚拟机调用Native方法服务的；</li>
 <li>Java堆（Java Heap）：Java虚拟机中内存最大的一块，是被所有线程共享的，几乎所有的对象实例都在这里分配内存；</li>
@@ -880,21 +880,21 @@
 <h5 id="197-队列和栈是什么？有什么区别？"><a href="#197-队列和栈是什么？有什么区别？" class="headerlink" title="197.队列和栈是什么？有什么区别？"></a>197.队列和栈是什么？有什么区别？</h5><p>队列和栈都是被用来预存数据的。</p>
 <p>队列允许先进先出检索元素，但也有例外的情况，Deque接口允许从两端检索元素。</p>
 <p>栈和队列相似，但是后进先出进行检索元素。</p>
-<h5 id="198-什么是双亲委派模型？"><a href="#198-什么是双亲委派模型？" class="headerlink" title="198.什么是双亲委派模型？"></a>198.什么是双亲委派模型？</h5><p>在介绍双亲委派模型前先数一下类加载器。对于任意一个类，都需要由加载它的类加载器和这个类本身一同确立在JVM中的唯一性，每一个类加载器，都有一个独立的类名称空间。类加载器就根据级指定的全限定类名称将class文件加载到JVM内存，然后再转化为class对象。</p>
+<h5 id="198-什么是双亲委派模型？"><a href="#198-什么是双亲委派模型？" class="headerlink" title="198.什么是双亲委派模型？"></a>198.什么是双亲委派模型？</h5><p>在介绍双亲委派模型前先数一下类加载器。对于任意一个类，都需要由加载它的类加载器和这个类本身一同确立在JVM中的唯一性，每一个类加载器，都有一个独立的类名称空间。类加载器就根据指定的全限定类名称将class文件加载到JVM内存，然后再转化为class对象。</p>
 <p>类加载器分类：</p>
 <ul>
 <li>启动类加载器（Bootstrap ClassLoader），是虚拟机自身的一部分，用来加载JAVA_HOME/lib/目录中的，或者被-Xbootclasspath参数指定的路径中并且被虚拟机识别的类库：</li>
 <li>其他类加载器：<ul>
-<li>扩展类加载器（Extension ClassLoader）：负责加载\lib\ext目录或Java.ext.dirs系统变量指定的路径中的素有有类库；</li>
+<li>扩展类加载器（Extension ClassLoader）：负责加载\lib\ext目录或Java.ext.dirs系统变量指定的路径中的所有类库；</li>
 <li>应用程序类加载器（Application ClassLoader）。负责加载用户类路径（ClassPath）上的指定类库，我们可以直接使用这个类加载器。一般情况，如果我们没有自定义类加载器默认就是用这个加载器。</li>
 </ul>
 </li>
 </ul>
-<p>双亲委派模型：如果一个类加载器收到类加载请求,它首先不会自己去加载这个类，而是把这个请求委派给父类加载器去完成，每一层的类加载器都是如此，这样所有的加载请求都会被传送到顶层的时，启动类加载器中，只有当父加载无法完成加载请求（它的搜索范围中没有找到所需的类）时，子加载器才会尝试去加载类。</p>
+<p>双亲委派模型：如果一个类加载器收到类加载请求,它首先不会自己去加载这个类，而是把这个请求委派给父类加载器去完成，每一层的类加载器都是如此，这样所有的加载请求都会被传送到顶层的启动类加载器中，只有当父加载无法完成加载请求（它的搜索范围中没有找到所需的类）时，子加载器才会尝试去加载类。</p>
 <h5 id="199-说一下类加载的执行过程？"><a href="#199-说一下类加载的执行过程？" class="headerlink" title="199.说一下类加载的执行过程？"></a>199.说一下类加载的执行过程？</h5><p>类加载分为以下5个步骤：</p>
 <ul>
 <li>加载：根据查找路径找到相应的class文件然后导入;</li>
-<li>检查：检查加载的clss文件的正确性；</li>
+<li>检查：检查加载的class文件的正确性；</li>
 <li>准备：给类中的静态变量分配内存空间；</li>
 <li>解析：虚拟机将常量池中的符号引入替换成直接引用的过程。符号引用就理解为一个标示，而在直接引用直接指向内存中的地址；</li>
 <li>初始化：对静态变量和静态代码块执行初始化工作。</li>
@@ -933,19 +933,18 @@
 <li><p>老年代回收器：Serial Old、Parallel Old、CMS</p>
 </li>
 <li><p>整堆回收器：G1</p>
-<p>新生代垃圾回收器一般采用复制算法，复制算法的有点效率高、缺点内存利用率低；老年代回收器一般采用的是标记-整理的算法进行垃圾回收。</p>
+<p>新生代垃圾回收器一般采用复制算法，复制算法的优点效率高、缺点内存利用率低；老年代回收器一般采用的是标记-整理的算法进行垃圾回收。</p>
 </li>
 </ul>
-<h5 id="206-简述分代垃圾回收器是怎么工作的？"><a href="#206-简述分代垃圾回收器是怎么工作的？" class="headerlink" title="206.简述分代垃圾回收器是怎么工作的？"></a>206.简述分代垃圾回收器是怎么工作的？</h5><p>分代回收器有两个分区：老生代和新生代，新生代默认的空间占比总空间的1/3,老生代的默认占比是2/3。</p>
-<p>新生代的使用的是复制算法，新生代里有3个分区：Eden、ToSurvivor、From Survivor，它们的默认占比是8:1:1,它的执行流程如下：</p>
+<h5 id="206-简述分代垃圾回收器是怎么工作的？"><a href="#206-简述分代垃圾回收器是怎么工作的？" class="headerlink" title="206.简述分代垃圾回收器是怎么工作的？"></a>206.简述分代垃圾回收器是怎么工作的？</h5><p>分代回收器有两个分区：老生代和新生代，新生代默认的空间占比是总空间的1/3,老生代的默认占比是2/3。</p>
+<p>新生代使用的是复制算法，新生代里有3个分区：Eden、ToSurvivor、From Survivor，它们的默认占比是8:1:1,它的执行流程如下：</p>
 <ul>
-<li><p>把Eden+From Survivor存活的对象放入To Survivor 区;</p>
-</li>
-<li><p>清除Eden和From Survivor分区；</p>
-</li>
-<li><p>From Survivor 和 To Survivor分区交换，From Survivor 变 To Survivor, To Survivor变From Survivor。</p>
-</li>
+<li>把Eden+From Survivor存活的对象放入To Survivor 区;</li>
+<li>清除Eden和From Survivor分区；</li>
+<li>From Survivor 和 To Survivor分区交换，From Survivor 变 To Survivor, To Survivor变From Survivor。</li>
 </ul>
+<p>每次在From Surrvivor到To Survivor 移动时都存活的对象，年龄就+1，当年龄到达15（默认配置是15）时，升级为老生代。大对象也会直接进入老生代。</p>
+<p>老生代当空间占用到达某个值后就会触发全局垃圾收回，一般使用标记整理的执行算法。以上这些循环往复就构成了整个分代垃圾回收的整体执行流程。</p>
 <h5 id="207-说一下JVM的调优工具？"><a href="#207-说一下JVM的调优工具？" class="headerlink" title="207.说一下JVM的调优工具？"></a>207.说一下JVM的调优工具？</h5><p>​    JDK自带很多调优工具,都位于JDK的bin目录下，其中最常见的是jconsole和jvisualvm这两款视图工具。</p>
 <ul>
 <li><p>jconsole：用于JVM中的内存、线程和类进行监控；</p>
