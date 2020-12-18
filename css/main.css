@@ -2008,7 +2008,7 @@ img:hover {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #780afb;
+  background: #ff5852;
 }
 .links-of-blogroll {
   font-size: 13px;
@@ -3293,7 +3293,6 @@ ul.breadcrumb li+li:last-child {
   }
 }
 .menu .menu-item a:hover {
-  margin-top: 2px;
   border-bottom-color: rgba(161,102,171,0);
 }
 .posts-expand .post-title {
