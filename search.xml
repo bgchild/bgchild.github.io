@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>关于InteliJ的Debug按钮能说明</title>
+    <url>/2021/01/13/InteliJ%E7%9A%84Debug%E6%8C%89%E9%92%AE%E5%8A%9F%E8%83%BD%E8%AF%B4%E6%98%8E.html</url>
+    <content><![CDATA[<h2 id="关于InteliJ的Debug按钮功能"><a href="#关于InteliJ的Debug按钮功能" class="headerlink" title="关于InteliJ的Debug按钮功能"></a>关于InteliJ的Debug按钮功能</h2><p><img src="../images/IntelliJ%E7%9A%84Debug/image-20210113205438826.png" alt="image-20210113205438826"></p>
+<h4 id="1、Step-over（F8）"><a href="#1、Step-over（F8）" class="headerlink" title="1、Step over（F8）"></a>1、Step over（F8）</h4><p>程序向下执行一行（如果当前行有方法调用，这个方法将被执行完毕返回，然后到下一行）</p>
+<h4 id="2、Step-Into-（F7）"><a href="#2、Step-Into-（F7）" class="headerlink" title="2、Step Into （F7）"></a>2、Step Into （F7）</h4><p>程序向下执行一行。（如果该行有自定义方法，则运行进入自定义方法。PS:不会进入官方类库的方法）</p>
+<h4 id="3、Force-Step-Into-（Alt-Shift-F7）"><a href="#3、Force-Step-Into-（Alt-Shift-F7）" class="headerlink" title="3、Force Step Into （Alt+Shift+F7）"></a>3、Force Step Into （Alt+Shift+F7）</h4><p>进入任何方法（比如使用官方类库的方法）</p>
+<h4 id="4、Step-Out（Shift-F8）"><a href="#4、Step-Out（Shift-F8）" class="headerlink" title="4、Step Out（Shift+F8）"></a>4、Step Out（Shift+F8）</h4><p>跳出并执行完该方法，返回到该方法被调用处的下一行语句</p>
+<h4 id="5、Drop-Frame"><a href="#5、Drop-Frame" class="headerlink" title="5、Drop Frame"></a>5、Drop Frame</h4><p>重来，点击按钮，你将返回到当前方法的调用处（如上图，程序会回到main()中）重新执行，并且所有上下文变量的值也回到那个时候。只要调用链中还有上级方法，可以跳到其中的任何一个方法。</p>
+<h4 id="6、Run-to-Cursor（Alt-F9）"><a href="#6、Run-to-Cursor（Alt-F9）" class="headerlink" title="6、Run to Cursor（Alt+F9）"></a>6、Run to Cursor（Alt+F9）</h4><p>会将程序执行到光标位置的断电再暂停</p>
+<h4 id="7、Resume-Program-（F9）"><a href="#7、Resume-Program-（F9）" class="headerlink" title="7、Resume Program （F9）"></a>7、Resume Program （F9）</h4><p>执行到下一个断点处暂停</p>
+<h4 id="8、View-Breakpoints（Ctrl-Shiift-F8）"><a href="#8、View-Breakpoints（Ctrl-Shiift-F8）" class="headerlink" title="8、View Breakpoints（Ctrl+Shiift+F8）"></a>8、View Breakpoints（Ctrl+Shiift+F8）</h4><p>查看所有断点，箭头1指向的是你曾经设置过的断点，箭头2可以设置条件断点（满足某个条件的时候，暂停程序的执行，如 c==97）</p>
+<p><img src="../images/IntelliJ%E7%9A%84Debug/image-20210113210211433.png" alt="image-20210113210211433"></p>
+<h4 id="9、Mute-Breakpoints"><a href="#9、Mute-Breakpoints" class="headerlink" title="9、Mute Breakpoints"></a>9、Mute Breakpoints</h4><p>禁用所有断点</p>
+]]></content>
+  </entry>
+  <entry>
     <title>PowerDesigner显示Comment注释</title>
     <url>/2020/12/07/PowerDesigner%E6%98%BE%E7%A4%BAComment%E6%B3%A8%E9%87%8A.html</url>
     <content><![CDATA[<p>打开菜单Tools&gt;Execute Commands&gt;Edit/Run Script.. 或者用快捷键 Ctrl+Shift+X</p>
@@ -303,6 +319,32 @@
 ]]></content>
       <tags>
         <tag>Git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Redis学习笔记</title>
+    <url>/2020/01/03/Redis%E7%AC%94%E8%AE%B0.html</url>
+    <content><![CDATA[<a id="more"></a>
+<ol>
+<li><p>通用命令</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">redis-cli</span><br><span class="line">AUTH PASSWORD</span><br><span class="line">select 1</span><br><span class="line">keys *</span><br><span class="line">del key</span><br><span class="line">type key</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>数据类型</p>
+<p>字符串类型string</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">set key value</span><br><span class="line">get key</span><br></pre></td></tr></table></figure>
+<p>哈希类型hash</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">hset key field value</span><br><span class="line">hget key field</span><br><span class="line">hgetall key</span><br><span class="line">hdel key field</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>列表类型list</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">lpush key value</span><br><span class="line">rpush key value</span><br><span class="line">lrange key start end</span><br><span class="line">lpop key</span><br><span class="line">rpop key</span><br></pre></td></tr></table></figure>
+<p>   集合类型set</p>
+   <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sadd key value</span><br><span class="line">smembers key</span><br><span class="line">srem key value</span><br></pre></td></tr></table></figure>
+<p>   有序集合类型zset</p>
+   <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">zadd key score value</span><br><span class="line">zrange key start end</span><br><span class="line">zrem key value</span><br></pre></td></tr></table></figure>
+]]></content>
+      <tags>
+        <tag>redis</tag>
       </tags>
   </entry>
   <entry>
