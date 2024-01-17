@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "vuepress dev docs",
-    "build": "set NODE_OPTIONS=--openssl-legacy-provider & vuepress build docs",
+    "build": "vuepress build docs",
     "predev": "vdoing",
     "prebuild": "vdoing",
     "deploy": "bash deploy.sh",
