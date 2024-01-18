@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+# 设置 OpenSSL Legacy Provider 环境变量
+export NODE_OPTIONS=--openssl-legacy-provider
+
 # 确保脚本抛出遇到的错误
 set -e
 
