@@ -37,7 +37,7 @@ postList: detailed
 
 <ClientOnly>
   <!-- <WebInfo /> -->
-  <IndexBigImg />
+  <!-- <IndexBigImg /> -->
   <!-- <Fantasy index="true" /> -->
 </ClientOnly>
 
