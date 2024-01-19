@@ -15,7 +15,7 @@ export default <VdoingThemeConfig> {
   searchMaxSuggestions: 10, // 搜索结果显示最大数
   lastUpdated: "更新时间", // 开启更新时间，并配置前缀文字   string | boolean (取值为git提交时间)
   docsDir: "docs", // 指定根目录
-  editLinks: true, // 启用编辑
+  editLinks: false, // 启用编辑
   editLinkText: "编辑此页",
 
   //*** 以下配置是Vdoing主题改动和新增的配置 ***//
@@ -34,7 +34,7 @@ export default <VdoingThemeConfig> {
   //   'https://cdn.staticaly.com/gh/xugaoyi/image_store@master/blog/20200507175845.jpeg',
   //   'https://cdn.staticaly.com/gh/xugaoyi/image_store@master/blog/20200507175846.jpeg'
   // ], // body背景大图(即整个页面的背景图)，默认无。 单张图片 String || 多张图片 Array, 多张图片时每隔15秒换一张。
-  bodyBgImgOpacity: 0.2, // body背景图透明度，选值 0 ~ 1.0, 默认0.5
+  bodyBgImgOpacity: 0.5, // body背景图透明度，选值 0 ~ 1.0, 默认0.5
 
   // titleBadge: false, // 文章标题前的图标是否显示，默认true
   // titleBadgeIcons: [ // 文章标题前图标的地址，默认主题内置图标
